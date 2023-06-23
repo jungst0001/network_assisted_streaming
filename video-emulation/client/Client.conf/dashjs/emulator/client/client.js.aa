@@ -1,0 +1,20 @@
+function httpGet() {
+    	var url = "192.168.0.2:8888";
+	
+	XHR.open("GET", url);
+	XHR.setRequestHeader(
+	    'Content-Type'
+	};
+
+	XHR.send("");
+}
+
+XHR.addEventListener('load',function(e){
+	const result = e.target.response;
+	console.log(typeof result);
+	console.log(result);
+
+})
+
+
+

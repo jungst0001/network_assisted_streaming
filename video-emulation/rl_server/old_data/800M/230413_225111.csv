@@ -1,0 +1,963 @@
+Server Info
+Server CPU Core,40
+Server CPU Freq,0.0 GHz
+Server RAM Total,23 GB
+time,0.919,1.833,2.746,3.659,4.573,5.486,6.400,7.316,8.232,9.146,10.060,10.975,11.891,12.808,13.724,14.638,15.553,16.475,17.392,18.307,19.222,20.180,21.095,22.011,22.926,23.841,24.880,25.795,26.709,27.701,28.749,29.663,30.577,31.566,32.513,33.517,34.634,35.551,36.464,37.377,38.290,39.203,40.117,41.031,41.946,42.861,43.775,44.690,45.605,46.519,47.434,48.349,49.262,50.176,51.089,52.002,52.916,53.830,54.743,55.657,56.572,57.487,58.401,59.317,60.230,61.143,62.057,62.970,63.884,64.799,65.712,66.626,67.540,68.454,69.369,70.283,71.196,72.110,73.023,73.936,74.850,75.765,76.679,77.592,78.506,79.419,80.332,81.245,82.159,83.075,83.990,84.906,85.820,86.736,87.649,88.564,89.479,90.395,91.309,92.223,93.137,94.051,94.964,95.877,96.790,97.703,98.617,99.531,100.445,101.360,102.273,103.187,104.111,105.028,105.942,106.855,107.768,108.681,109.594,110.508,111.423,112.338,113.251,114.165,115.079,115.992,116.905,117.819,118.733,119.647,120.560,121.473,122.386,123.301,124.214,125.129,126.045,126.958,127.872,128.787,129.704,130.620,131.533,132.446,133.360,134.275,135.192,136.106,137.021,137.935,138.848,139.761,140.682,141.601,142.518,143.432,144.346,145.259,146.172,147.091,148.007,148.923,149.836
+Player Connected,0,0,0,0,0,0,1,3,4,4,6,7,8,10,10,10,12,15,18,18,18,22,25,28,31,33,35,38,40,42,43,44,45,47,48,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,46,45,42,38,38,28,25,25,25,25,25,25,25,24,24,24,23,23,23,23,22,22
+TX (Kbps),0.0,0.0,0.0,0.0,0.0,0.0,2.3828,3.7188,4.6309,0.0,3.8926,7.3672,3.5781,5.8984,1.8477,2.9102,4.7969,31.5527,21.9238,47.6992,3.8809,39.043,28.2598,49.5,11.7012,30.7656,15.9531,48.6445,60.9922,38.6152,31.6699,61.4219,54.4062,124.875,21.293,11.8711,4.2656,10.5938,12.2988,8.918,7.084,8.0469,4.5547,2.334,3.6758,4.7578,3.0312,4.5957,6.1895,4.6016,3.1641,3.625,5.1641,2.5137,6.2188,4.0078,1.8887,3.8516,4.6777,2.9277,3.0859,1.9727,2.3652,2.0781,6.9375,2.6055,3.125,3.4883,3.3164,2.6348,2.3027,2.5371,2.248,1.7695,4.209,3.7227,2.9668,1.8867,2.1035,5.9199,3.1328,1.6191,4.625,2.4316,4.2344,2.0898,1.6523,2.9473,2.4004,2.3926,2.3516,2.25,3.9688,3.5215,2.5254,2.9824,3.3848,3.4902,3.3496,2.3008,1.8477,1.7246,2.4121,3.3359,3.4766,2.7207,5.291,2.2734,3.0234,2.5293,3.3516,6.1699,2.0879,1.4434,1.9297,1.9707,3.3164,2.0996,1.8438,2.3945,2.7793,7.375,1.5664,1.5879,2.1367,3.957,1.6094,1.6191,2.0469,1.5801,3.3613,2.5078,1.377,1.9766,3.9043,3.3984,1.7227,1.5859,2.3867,3.2168,3.3477,3.9277,1.8926,1.7207,5.4805,3.7578,2.6836,1.7637,3.0762,3.5254,3.0664,10.8105,14.9805,2.8652,3.5703,3.9023,7.7051,3.0703,1.8223,32.2832,4.6191,2.8076,8.4668
+RX (Kbps),0.0,0.0449,0.0,0.0449,0.0,0.0449,2.1387,3.8311,4.0176,0.0449,3.8379,6.6934,3.792,5.3418,1.4443,2.7246,5.1562,1134.832,1000.2051,2220.7393,4.8066,2212.9277,1158.1719,2254.7383,9.1436,1191.0918,21.2012,2731.9424,5170.2354,2444.9639,1271.4541,3004.5293,3318.7119,8449.5176,775.2402,71.5,0.8477,5.5781,17.4258,12.7852,3.5664,13.5742,16.6602,18.0615,24.5312,19.4336,24.2617,36.8037,25.4902,70.625,55.1328,70.4219,77.7832,4.6484,42.3867,75.7344,10.1484,78.1953,88.2129,84.2842,48.7812,30.3652,62.0068,24.2891,79.5352,35.7617,30.959,53.3828,54.1123,46.9531,35.042,79.3477,45.4922,46.7266,59.7686,39.1758,93.8281,19.0391,30.1699,59.0078,57.4355,27.0967,83.9844,71.0117,151.8672,93.75,66.4102,109.0586,59.0986,53.3516,66.1328,94.1445,54.3506,48.9746,64.9385,83.8281,30.5898,56.8359,102.6562,39.6328,36.0068,61.8398,89.3047,104.3848,55.791,74.3516,93.3232,53.3398,44.0469,60.1289,54.3574,44.8574,33.1631,49.1445,70.0957,67.4961,94.168,66.0938,102.0352,58.3525,46.6475,62.1953,56.1719,107.6943,84.8477,96.0469,60.4141,62.5654,53.2324,63.4297,53.5898,82.4453,61.8398,42.9844,98.7656,29.8896,50.9736,37.3809,54.4473,111.3086,57.1553,54.0391,35.8828,49.0273,66.6055,74.9307,82.4199,86.3232,75.9766,99.5781,79.1709,77.2734,94.873,53.0166,57.6719,86.1914,98.8945,115.2988,85.1738,1933.2734,99.6973,2.2695,3.2832
+TX + RX (Kbps),0.0,0.0449,0.0,0.0449,0.0,0.0449,4.5215,7.5499,8.648499999999999,0.0449,7.730499999999999,14.0606,7.3701,11.2402,3.292,5.6348,9.9531,1166.3847,1022.1289,2268.4385,8.6875,2251.9707000000003,1186.4317,2304.2383,20.8448,1221.8573999999999,37.1543,2780.5869,5231.227599999999,2483.5791000000004,1303.124,3065.9512,3373.1180999999997,8574.3926,796.5332,83.3711,5.1133,16.1719,29.7246,21.7032,10.6504,21.6211,21.2149,20.3955,28.206999999999997,24.191399999999998,27.292900000000003,41.3994,31.6797,75.2266,58.2969,74.0469,82.9473,7.1621,48.6055,79.7422,12.0371,82.04690000000001,92.8906,87.2119,51.8671,32.337900000000005,64.372,26.3672,86.4727,38.3672,34.084,56.871100000000006,57.4287,49.5879,37.3447,81.8848,47.740199999999994,48.4961,63.977599999999995,42.898500000000006,96.79490000000001,20.925800000000002,32.273399999999995,64.9277,60.5683,28.715799999999998,88.6094,73.44330000000001,156.1016,95.8398,68.0625,112.0059,61.498999999999995,55.7442,68.48440000000001,96.3945,58.3194,52.496100000000006,67.46390000000001,86.8105,33.9746,60.326100000000004,106.0058,41.933600000000006,37.8545,63.5644,91.71679999999999,107.7207,59.267599999999995,77.0723,98.6142,55.6132,47.0703,62.6582,57.708999999999996,51.0273,35.251,50.5879,72.02539999999999,69.46679999999999,97.48440000000001,68.1934,103.879,60.747,49.4268,69.5703,57.7383,109.2822,86.98440000000001,100.00389999999999,62.0235,64.1845,55.2793,65.0098,56.9511,84.9531,63.2168,44.961,102.66990000000001,33.288000000000004,52.6963,38.9668,56.833999999999996,114.5254,60.503,57.9668,37.775400000000005,50.748,72.08600000000001,78.6885,85.1035,88.0869,79.0528,103.10350000000001,82.2373,88.0839,109.8535,55.8818,61.242200000000004,90.0937,106.5996,118.3691,86.9961,1965.5566000000001,104.3164,5.0771,11.75
+CPU Usage Percent,0.1,0.0,0.0,0.0,0.0,0.0,0.6,1.0,1.4,0.2,1.7,2.4,1.6,3.1,1.1,1.3,2.8,9.9,16.8,11.6,2.9,11.7,19.9,17.4,16.5,26.5,15.3,17.6,15.6,23.2,45.0,33.7,35.7,39.4,28.5,28.5,61.7,65.0,14.5,3.9,7.9,2.9,4.3,6.3,9.9,5.7,4.6,6.7,8.0,3.7,7.7,6.6,3.8,3.2,4.3,4.4,3.6,3.9,3.2,5.8,5.7,7.7,5.4,3.8,4.2,2.9,5.2,3.9,5.8,5.8,4.7,6.1,3.0,3.7,7.8,2.6,3.0,4.6,2.8,3.9,3.7,7.4,3.9,3.9,3.2,3.8,2.9,5.3,5.4,8.6,3.3,3.3,4.5,5.6,4.0,5.9,5.9,4.6,4.1,5.9,6.1,4.5,4.9,4.3,5.7,3.5,5.2,4.1,6.9,3.2,5.0,7.2,7.0,6.9,3.0,4.1,4.0,4.1,3.1,5.3,4.9,4.7,4.0,6.4,5.3,3.1,2.6,5.9,3.8,5.2,3.4,3.2,2.8,2.7,3.7,5.5,7.8,4.9,6.7,4.3,9.4,5.8,2.9,3.6,4.5,6.5,4.9,3.7,5.5,3.8,2.7,6.4,7.8,9.9,7.2,3.7,3.3,4.2,4.3,3.8,6.0,7.6,1.7
+RAM Usage Percent,7.7,7.7,7.7,7.7,7.7,7.7,7.7,7.8,7.8,7.8,7.9,7.9,7.9,8.0,8.0,8.0,8.0,8.5,8.7,9.2,8.3,8.6,8.6,9.1,8.9,9.5,10.3,9.6,10.0,10.2,11.7,11.4,11.7,11.9,11.1,11.9,14.3,15.9,14.4,14.4,10.8,10.8,10.7,10.8,10.7,10.7,10.7,10.7,10.7,10.7,10.8,10.7,10.6,10.6,10.6,10.7,10.7,10.7,10.7,10.7,10.7,10.6,10.7,10.6,10.6,10.7,10.6,10.6,10.7,10.6,10.7,10.6,10.6,10.7,10.6,10.7,10.6,10.6,10.6,10.7,10.7,10.6,10.6,10.6,10.6,10.6,10.6,10.6,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.8,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.7,10.8,10.8,10.7,10.7,10.7,10.7,10.8,10.7,10.7,10.7,10.7,10.7,10.7,10.8,11.2,10.7,10.7,10.7,10.7,10.7,10.8,11.2,11.1,10.7
+
+IP,10.0.0.21
+Attribute,HIGH
+initTime,2023-04-13 22:51:35.061398
+endTime,2023-04-13 22:53:20.634573
+liveTime(sec),105.573175
+startupDelay,1615
+Total stalling Event,0
+player width,1280
+player height,720
+time,29.753
+elapsed,0.000
+bitrate,2000
+framerate,29.97
+bufferLevel,4.261
+GMSD,0
+bitrateSwitch,0
+stalling,0
+stallingTime (sec),0
+Throughput (Kbps),5899
+
+IP,10.0.0.13
+Attribute,HIGH
+initTime,2023-04-13 22:51:35.874268
+endTime,2023-04-13 22:53:21.377327
+liveTime(sec),105.503059
+startupDelay,1596
+Total stalling Event,0
+player width,1280
+player height,720
+time,30.689
+elapsed,0.000
+bitrate,2000
+framerate,29.97
+bufferLevel,3.527
+GMSD,0
+bitrateSwitch,0
+stalling,0
+stallingTime (sec),0
+Throughput (Kbps),5899
+
+IP,10.0.0.11
+Attribute,HIGH
+initTime,2023-04-13 22:51:37.162259
+endTime,2023-04-13 22:53:21.403219
+liveTime(sec),104.24096
+startupDelay,1871
+Total stalling Event,0
+player width,1280
+player height,720
+time,30.591
+elapsed,0.000
+bitrate,400
+framerate,29.97
+bufferLevel,32.346
+GMSD,0
+bitrateSwitch,0
+stalling,0
+stallingTime (sec),0
+Throughput (Kbps),6015
+
+
+IP,10.0.0.19
+Attribute,HIGH
+initTime,2023-04-13 22:51:37.959424
+endTime,2023-04-13 22:53:22.309367
+liveTime(sec),104.349943
+startupDelay,1604
+Total stalling Event,0
+player width,1280
+player height,720
+time,31.501
+elapsed,0.000
+bitrate,2000
+framerate,29.97
+bufferLevel,4.029
+GMSD,0
+bitrateSwitch,0
+stalling,0
+stallingTime (sec),0
+Throughput (Kbps),9201
+
+IP,10.0.0.3
+Attribute,HIGH
+initTime,2023-04-13 22:51:26.619677
+endTime,2023-04-13 22:53:23.352001
+liveTime(sec),116.732324
+startupDelay,1258
+Total stalling Event,0
+player width,1280
+player height,720
+time,19.826,26.392,32.417
+elapsed,0.000,6.566,12.591
+bitrate,2000,1401,1401
+framerate,29.97,29.97,29.97
+bufferLevel,6.891,22.706,30.242
+GMSD,0,0,0.70611
+bitrateSwitch,0,1,0
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),7765,11564,4046
+
+IP,10.0.0.15
+Attribute,HIGH
+initTime,2023-04-13 22:51:30.556645
+endTime,2023-04-13 22:53:23.379217
+liveTime(sec),112.822572
+startupDelay,998
+Total stalling Event,0
+player width,1280
+player height,720
+time,24.694,30.762
+elapsed,0.000,6.068
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,5.73,29.94
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),6713,13067
+
+IP,10.0.0.12
+Attribute,HIGH
+initTime,2023-04-13 22:51:37.546558
+endTime,2023-04-13 22:53:23.348469
+liveTime(sec),105.801911
+startupDelay,941
+Total stalling Event,0
+player width,1280
+player height,720
+time,32.361
+elapsed,0.000
+bitrate,2000
+framerate,29.97
+bufferLevel,6.111
+GMSD,0
+bitrateSwitch,0
+stalling,0
+stallingTime (sec),0
+Throughput (Kbps),7765
+
+IP,10.0.0.9
+Attribute,HIGH
+initTime,2023-04-13 22:51:26.792323
+endTime,2023-04-13 22:53:23.353225
+liveTime(sec),116.560902
+startupDelay,1404
+Total stalling Event,0
+player width,1280
+player height,720
+time,19.876,26.888,32.580
+elapsed,0.000,7.012,12.704
+bitrate,2000,1401,1401
+framerate,29.97,29.97,29.97
+bufferLevel,3.926,20.456,29.264
+GMSD,0,0,0.72434
+bitrateSwitch,0,1,0
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),5899,11160,5170
+
+IP,10.0.0.23
+Attribute,HIGH
+initTime,2023-04-13 22:51:27.531530
+endTime,2023-04-13 22:53:24.668069
+liveTime(sec),117.136539
+startupDelay,1533
+Total stalling Event,0
+player width,1280
+player height,720
+time,20.210,27.746,34.092
+elapsed,0.000,7.536,13.882
+bitrate,2000,1401,800
+framerate,29.97,29.97,29.97
+bufferLevel,4.21,32.346,32.036
+GMSD,0,0,0.91971
+bitrateSwitch,0,1,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),5899,13935,2612
+
+IP,10.0.0.25
+Attribute,HIGH
+initTime,2023-04-13 22:51:30.908617
+endTime,2023-04-13 22:53:24.574910
+liveTime(sec),113.666293
+startupDelay,1114
+Total stalling Event,0
+player width,1280
+player height,720
+time,24.741,31.366
+elapsed,0.000,6.625
+bitrate,400,400
+framerate,29.97,29.97
+bufferLevel,29.863,19.19
+GMSD,0,0
+bitrateSwitch,0,0
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),6015,0
+
+
+IP,10.0.0.45
+Attribute,HIGH
+initTime,2023-04-13 22:51:17.016448
+endTime,2023-04-13 22:53:24.845360
+liveTime(sec),127.828912
+startupDelay,523
+Total stalling Event,0
+player width,1280
+player height,720
+time,10.309,15.574,20.417,27.872,34.070
+elapsed,0.000,5.265,10.108,17.563,23.761
+bitrate,2000,1401,1401,800,800
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,5.716,29.956,31.181,31.572,31.072
+GMSD,0,0,0.78592,0,0.89071
+bitrateSwitch,0,1,0,1,0
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149,1471
+
+IP,10.0.0.49
+Attribute,HIGH
+initTime,2023-04-13 22:51:21.282523
+endTime,2023-04-13 22:53:24.983920
+liveTime(sec),123.701397
+startupDelay,661
+Total stalling Event,0
+player width,1280
+player height,720
+time,14.484,19.963,26.759,32.334
+elapsed,0.000,5.479,12.275,17.850
+bitrate,2000,1401,1401,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,6.487,30.412,31.068,30.637
+GMSD,0,0,0.77454,0
+bitrateSwitch,0,1,0,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149
+
+IP,10.0.0.1
+Attribute,HIGH
+initTime,2023-04-13 22:51:23.344810
+endTime,2023-04-13 22:53:25.183235
+liveTime(sec),121.838425
+startupDelay,1196
+Total stalling Event,0
+player width,1280
+player height,720
+time,16.455,22.074,28.482,34.567
+elapsed,0.000,5.619,12.027,18.112
+bitrate,2000,1401,1401,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,7.132,31.919,33.167,31.639
+GMSD,0,0,0.98799,0
+bitrateSwitch,0,1,0,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149
+
+IP,10.0.0.31
+Attribute,HIGH
+initTime,2023-04-13 22:51:27.688027
+endTime,2023-04-13 22:53:24.672744
+liveTime(sec),116.984717
+startupDelay,1085
+Total stalling Event,0
+player width,1280
+player height,720
+time,20.237,27.937,33.952
+elapsed,0.000,7.700,13.715
+bitrate,2000,2000,1401
+framerate,29.97,29.97,29.97
+bufferLevel,17.825,6.065,33.083
+GMSD,0,0,0.73280
+bitrateSwitch,0,0,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),8841,28015,14255
+
+IP,10.0.0.32
+Attribute,HIGH
+initTime,2023-04-13 22:51:28.087800
+endTime,2023-04-13 22:53:25.644320
+liveTime(sec),117.55652
+startupDelay,365
+Total stalling Event,0
+player width,1280
+player height,720
+time,22.440,29.006,34.986
+elapsed,0.000,6.566,12.546
+bitrate,2000,1401,800
+framerate,29.97,29.97,29.97
+bufferLevel,4.464,32.538,31.408
+GMSD,0,0,0.72933
+bitrateSwitch,0,1,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),8186,13535,2738
+
+IP,10.0.0.35
+Attribute,HIGH
+initTime,2023-04-13 22:51:32.007179
+endTime,2023-04-13 22:53:25.342823
+liveTime(sec),113.335644
+startupDelay,1681
+Total stalling Event,0
+player width,1280
+player height,720
+time,26.365,32.297
+elapsed,0.000,5.932
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,4.388,8.932
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),5899,6388
+
+IP,10.0.0.39
+Attribute,HIGH
+initTime,2023-04-13 22:51:32.499702
+endTime,2023-04-13 22:53:25.018427
+liveTime(sec),112.518725
+startupDelay,1401
+Total stalling Event,0
+player width,1280
+player height,720
+time,26.928,33.464
+elapsed,0.000,6.536
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,7.1,31.282
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),7765,12543
+
+IP,10.0.0.47
+Attribute,HIGH
+initTime,2023-04-13 22:51:33.086084
+endTime,2023-04-13 22:53:25.699816
+liveTime(sec),112.613732
+startupDelay,1495
+Total stalling Event,0
+player width,1280
+player height,720
+time,27.822,33.886
+elapsed,0.000,6.064
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,4.084,16.779
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),5899,9735
+
+IP,10.0.0.48
+Attribute,HIGH
+initTime,2023-04-13 22:51:34.263670
+endTime,2023-04-13 22:53:25.737105
+liveTime(sec),111.473435
+startupDelay,909
+Total stalling Event,0
+player width,1280
+player height,720
+time,29.027,35.209
+elapsed,0.000,6.182
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,7.147,23.794
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),7765,10502
+
+
+IP,10.0.0.7
+Attribute,HIGH
+initTime,2023-04-13 22:51:18.075164
+endTime,2023-04-13 22:53:25.072215
+liveTime(sec),126.997051
+startupDelay,1160
+Total stalling Event,0
+player width,1280
+player height,720
+time,10.898,15.968,21.526,28.486,34.555
+elapsed,0.000,5.070,10.628,17.588,23.657
+bitrate,2000,1401,1401,800,800
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,15.582,23.031,32.26,31.455,29.881
+GMSD,0,0,0.79393,0,0.98670
+bitrateSwitch,0,1,0,1,0
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),8386,45573,5108,2617,1471
+
+IP,10.0.0.33
+Attribute,HIGH
+initTime,2023-04-13 22:51:32.236737
+endTime,2023-04-13 22:53:25.059895
+liveTime(sec),112.823158
+startupDelay,1203
+Total stalling Event,0
+player width,1280
+player height,720
+time,26.908,32.405
+elapsed,0.000,5.497
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,6.983,31.219
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),7765,12543
+
+IP,10.0.0.17
+Attribute,HIGH
+initTime,2023-04-13 22:51:34.592644
+endTime,2023-04-13 22:53:25.800759
+liveTime(sec),111.208115
+startupDelay,1848
+Total stalling Event,0
+player width,1280
+player height,720
+time,29.522,35.204
+elapsed,0.000,5.682
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,5.227,9.508
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),5899,8269
+
+IP,10.0.0.26
+Attribute,HIGH
+initTime,2023-04-13 22:51:31.761681
+endTime,2023-04-13 22:53:32.281577
+liveTime(sec),120.519896
+startupDelay,1073
+Total stalling Event,0
+player width,1280
+player height,720
+time,27.249,33.826,41.223
+elapsed,0.000,6.577,13.974
+bitrate,2000,1401,1401
+framerate,29.97,29.97,29.97
+bufferLevel,7.141,31.632,32.169
+GMSD,0,0,0.90132
+bitrateSwitch,0,1,0
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),7765,12543,3067
+
+IP,10.0.0.43
+Attribute,HIGH
+initTime,2023-04-13 22:51:30.723506
+endTime,2023-04-13 22:53:36.262415
+liveTime(sec),125.538909
+startupDelay,1007
+Total stalling Event,0
+player width,1280
+player height,720
+time,24.827,32.098,45.091
+elapsed,0.000,7.271,20.264
+bitrate,2000,1401,1401
+framerate,29.97,29.97,29.97
+bufferLevel,6.345,31.072,30.89
+GMSD,0,0,0.89789
+bitrateSwitch,0,1,0
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),7765,12543,3067
+
+IP,10.0.0.37
+Attribute,HIGH
+initTime,2023-04-13 22:51:39.246922
+endTime,2023-04-13 22:53:38.823462
+liveTime(sec),119.57654
+startupDelay,1748
+Total stalling Event,0
+player width,1280
+player height,720
+time,33.851,47.662
+elapsed,0.000,13.811
+bitrate,2000,1401
+framerate,29.97,29.97
+bufferLevel,4.25,32.194
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),6319,14409
+
+Avg GMSD,0.8820788888888891
+Total Bitrate Switch,25
+Total Stalling Event, 0
+
+IP,10.0.0.46
+Attribute,HIGH
+initTime,2023-04-13 22:51:18.715471
+endTime,2023-04-13 22:53:41.326023
+liveTime(sec),142.610552
+startupDelay,410
+Total stalling Event,0
+player width,1280
+player height,720
+time,12.196,17.279,23.502,30.218,42.981,57.148
+elapsed,0.000,5.083,11.306,18.022,30.785,44.952
+bitrate,2000,1401,1401,800,800,400
+framerate,29.97,29.97,29.97,29.97,29.97,29.97
+bufferLevel,5.338,31.072,31.2,31.361,31.173,32.552
+GMSD,0,0,0.96560,0,0.90545,0
+bitrateSwitch,0,1,0,1,0,1
+stalling,0,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149,1471,853
+
+IP,10.0.0.8
+Attribute,HIGH
+initTime,2023-04-13 22:51:19.013057
+endTime,2023-04-13 22:53:41.326045
+liveTime(sec),142.312988
+startupDelay,388
+Total stalling Event,0
+player width,1280
+player height,720
+time,12.435,17.475,23.359,30.582,74.968
+elapsed,0.000,5.040,10.924,18.147,62.533
+bitrate,2000,1401,2000,2000,800
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,5.443,29.545,25.066,13.899,29.393
+GMSD,0,0,0.99604,0,0.84261
+bitrateSwitch,0,1,1,0,1
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),3227,34380,3054,5554,1044
+
+IP,10.0.0.29
+Attribute,HIGH
+initTime,2023-04-13 22:51:21.065615
+endTime,2023-04-13 22:53:41.326048
+liveTime(sec),140.260433
+startupDelay,891
+Total stalling Event,0
+player width,1280
+player height,720
+time,13.983,19.092,25.550,32.158,86.004
+elapsed,0.000,5.109,11.567,18.175,72.021
+bitrate,400,400,400,400,400
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,30.775,18.874,26.687,14.459,27.982
+GMSD,0,0,0.91925,0,0.78427
+bitrateSwitch,0,0,0,0,0
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),4456,0,1529,0,1681
+
+IP,10.0.0.30
+Attribute,HIGH
+initTime,2023-04-13 22:51:21.896990
+endTime,2023-04-13 22:53:41.326051
+liveTime(sec),139.429061
+startupDelay,342
+Total stalling Event,0
+player width,1280
+player height,720
+time,15.403,20.472,27.898,34.061,45.549,125.323
+elapsed,0.000,5.069,12.495,18.658,30.146,109.920
+bitrate,2000,1401,1401,800,800,400
+framerate,29.97,29.97,29.97,29.97,29.97,29.97
+bufferLevel,5.664,29.612,29.955,30.005,33.256,30.274
+GMSD,0,0,0.83469,0,0.98520,0
+bitrateSwitch,0,1,0,1,0,1
+stalling,0,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149,2154,1724
+
+IP,10.0.0.50
+Attribute,HIGH
+initTime,2023-04-13 22:51:22.776049
+endTime,2023-04-13 22:53:41.326054
+liveTime(sec),138.550005
+startupDelay,465
+Total stalling Event,0
+player width,1280
+player height,720
+time,16.675,22.304,28.494,34.968,75.338,93.358
+elapsed,0.000,5.629,11.819,18.293,58.663,76.683
+bitrate,2000,1401,1401,800,400,800
+framerate,29.97,29.97,29.97,29.97,29.97,29.97
+bufferLevel,5.704,29.657,30.493,29.749,32.474,31.742
+GMSD,0,0,0.81026,0,0,0
+bitrateSwitch,0,1,0,1,1,1
+stalling,0,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0,0
+Throughput (Kbps),7765,12543,3067,2149,1724,1983
+
+IP,10.0.0.2
+Attribute,HIGH
+initTime,2023-04-13 22:51:24.114655
+endTime,2023-04-13 22:53:41.326056
+liveTime(sec),137.211401
+startupDelay,448
+Total stalling Event,0
+player width,1280
+player height,720
+time,17.582,23.492,30.718,56.721
+elapsed,0.000,5.910,13.136,39.139
+bitrate,2000,1401,800,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,6.203,30.958,29.766,29.605
+GMSD,0,0,0.89813,0
+bitrateSwitch,0,1,1,0
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,12068,2612,2148
+
+IP,10.0.0.4
+Attribute,HIGH
+initTime,2023-04-13 22:51:27.382167
+endTime,2023-04-13 22:53:41.326059
+liveTime(sec),133.943892
+startupDelay,943
+Total stalling Event,0
+player width,1280
+player height,720
+time,21.224,27.965,34.210,41.563,140.170
+elapsed,0.000,6.741,12.986,20.339,118.946
+bitrate,2000,1401,800,800,400
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,6.047,18.31,29.037,29.537,31.474
+GMSD,0,0,0.71742,0,0
+bitrateSwitch,0,1,1,0,1
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),7765,9294,6316,2149,973
+
+IP,10.0.0.10
+Attribute,HIGH
+initTime,2023-04-13 22:51:27.817071
+endTime,2023-04-13 22:53:41.326061
+liveTime(sec),133.50899
+startupDelay,935
+Total stalling Event,0
+player width,1280
+player height,720
+time,21.448,28.099,34.230,125.718
+elapsed,0.000,6.651,12.782,104.270
+bitrate,2000,1401,1401,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,7.488,16.015,27.969,31.909
+GMSD,0,0,0.89969,0
+bitrateSwitch,0,1,0,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,7869,6595,2178
+
+IP,10.0.0.24
+Attribute,HIGH
+initTime,2023-04-13 22:51:28.285792
+endTime,2023-04-13 22:53:41.326070
+liveTime(sec),133.040278
+startupDelay,908
+Total stalling Event,0
+player width,1280
+player height,720
+time,22.474,29.040,35.076,58.387,61.720
+elapsed,0.000,6.566,12.602,35.913,39.246
+bitrate,2000,1401,1401,800,400
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,7.323,21.047,30.43,30.788,31.41
+GMSD,0,0,0.87699,0,0
+bitrateSwitch,0,1,0,1,1
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),7765,10502,5108,1983,1724
+
+IP,10.0.0.16
+Attribute,HIGH
+initTime,2023-04-13 22:51:31.275943
+endTime,2023-04-13 22:53:41.326073
+liveTime(sec),130.05013
+startupDelay,592
+Total stalling Event,0
+player width,1280
+player height,720
+time,26.856,32.615,89.563,139.421
+elapsed,0.000,5.759,62.707,112.565
+bitrate,400,400,2000,400
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,29.874,17.861,10.049,30.391
+GMSD,0,0,0.83787,0
+bitrateSwitch,0,0,1,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),6015,0,5080,1251
+
+IP,10.0.0.44
+Attribute,HIGH
+initTime,2023-04-13 22:51:32.779189
+endTime,2023-04-13 22:53:41.326075
+liveTime(sec),128.546886
+startupDelay,555
+Total stalling Event,0
+player width,1280
+player height,720
+time,28.027,34.316,44.670,65.733,68.950,111.449
+elapsed,0.000,6.289,16.643,37.706,40.923,83.422
+bitrate,2000,1401,1401,800,400,800
+framerate,29.97,29.97,29.97,29.97,29.97,29.97
+bufferLevel,6.053,26.826,30.738,31.614,31.869,31.385
+GMSD,0,0,0.96149,0,0,0
+bitrateSwitch,0,1,0,1,1,1
+stalling,0,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0,0
+Throughput (Kbps),7765,11564,4046,1983,1724,2149
+
+IP,10.0.0.36
+Attribute,HIGH
+initTime,2023-04-13 22:51:33.325471
+endTime,2023-04-13 22:53:41.326085
+liveTime(sec),128.000614
+startupDelay,1251
+Total stalling Event,0
+player width,1280
+player height,720
+time,28.072,34.737,44.657,117.467,140.573
+elapsed,0.000,6.665,16.585,89.395,112.501
+bitrate,2000,1401,800,800,800
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,6.802,6.988,33.74,31.072,30.665
+GMSD,0,0,0.75340,0,0
+bitrateSwitch,0,1,1,0,0
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),7765,4522,11750,1471,1487
+
+IP,10.0.0.34
+Attribute,HIGH
+initTime,2023-04-13 22:51:33.610102
+endTime,2023-04-13 22:53:41.326087
+liveTime(sec),127.715985
+startupDelay,929
+Total stalling Event,0
+player width,1280
+player height,720
+time,28.520,34.898,98.137,103.052,113.832
+elapsed,0.000,6.378,69.617,74.532,85.312
+bitrate,400,400,400,400,400
+framerate,29.97,29.97,29.97,29.97,29.97
+bufferLevel,30.965,19.18,26.022,27.062,29.083
+GMSD,0,0,0,0,0
+bitrateSwitch,0,0,0,0,0
+stalling,0,0,0,0,0
+stallingTime (sec),0,0,0,0,0
+Throughput (Kbps),6015,0,1681,1529,1324
+
+IP,10.0.0.40
+Attribute,HIGH
+initTime,2023-04-13 22:51:33.997489
+endTime,2023-04-13 22:53:41.326090
+liveTime(sec),127.328601
+startupDelay,887
+Total stalling Event,0
+player width,1280
+player height,720
+time,28.275,34.524,64.099
+elapsed,0.000,6.249,35.824
+bitrate,2000,1401,800
+framerate,29.97,29.97,29.97
+bufferLevel,5.832,30.293,32.938
+GMSD,0,0,0
+bitrateSwitch,0,1,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),9201,12542,2830
+
+IP,10.0.0.18
+Attribute,HIGH
+initTime,2023-04-13 22:51:35.437955
+endTime,2023-04-13 22:53:41.326092
+liveTime(sec),125.888137
+startupDelay,907
+Total stalling Event,0
+player width,1280
+player height,720
+time,30.508,47.296,47.300,55.450
+elapsed,0.000,16.788,16.792,24.942
+bitrate,2000,1401,1401,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,6.181,11.067,30.49,30.454
+GMSD,0,0,0,0
+bitrateSwitch,0,1,0,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,7869,7741,2149
+
+IP,10.0.0.22
+Attribute,HIGH
+initTime,2023-04-13 22:51:36.452405
+endTime,2023-04-13 22:53:41.326095
+liveTime(sec),124.87369
+startupDelay,1065
+Total stalling Event,0
+player width,1280
+player height,720
+time,30.704,42.548,129.990
+elapsed,0.000,11.844,99.286
+bitrate,2000,1401,400
+framerate,29.97,29.97,29.97
+bufferLevel,6.824,30.513,30.409
+GMSD,0,0,0
+bitrateSwitch,0,1,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),8186,12543,950
+
+IP,10.0.0.14
+Attribute,HIGH
+initTime,2023-04-13 22:51:36.776565
+endTime,2023-04-13 22:53:41.326097
+liveTime(sec),124.549532
+startupDelay,841
+Total stalling Event,0
+player width,1280
+player height,720
+time,32.144,68.552
+elapsed,0.000,36.408
+bitrate,2000,800
+framerate,29.97,29.97
+bufferLevel,6.053,32.94
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),7765,2671
+
+IP,10.0.0.20
+Attribute,HIGH
+initTime,2023-04-13 22:51:38.450722
+endTime,2023-04-13 22:53:41.326106
+liveTime(sec),122.875384
+startupDelay,844
+Total stalling Event,0
+player width,1280
+player height,720
+time,33.831,82.874,136.237
+elapsed,0.000,49.043,102.406
+bitrate,2000,1401,800
+framerate,29.97,29.97,29.97
+bufferLevel,6.494,30.531,32.329
+GMSD,0,0,0
+bitrateSwitch,0,1,1
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),8186,12543,3729
+
+IP,10.0.0.38
+Attribute,HIGH
+initTime,2023-04-13 22:51:40.025055
+endTime,2023-04-13 22:53:41.326109
+liveTime(sec),121.301054
+startupDelay,499
+Total stalling Event,0
+player width,1280
+player height,720
+time,34.888,82.394
+elapsed,0.000,47.506
+bitrate,400,2000
+framerate,29.97,29.97
+bufferLevel,29.396,17.147
+GMSD,0,0
+bitrateSwitch,0,1
+stalling,0,0
+stallingTime (sec),0,0
+Throughput (Kbps),4456,9727
+
+IP,10.0.0.42
+Attribute,HIGH
+initTime,2023-04-13 22:51:41.734651
+endTime,2023-04-13 22:53:41.326111
+liveTime(sec),119.59146
+startupDelay,228
+Total stalling Event,0
+player width,1280
+player height,720
+time,41.224,88.346,127.465,134.251
+elapsed,0.000,47.122,86.241,93.027
+bitrate,2000,1401,800,800
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,5.008,29.095,29.22,32.764
+GMSD,0,0,0,0
+bitrateSwitch,0,1,1,0
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),7765,12543,1300,3729
+
+IP,10.0.0.28
+Attribute,HIGH
+initTime,2023-04-13 22:51:43.393678
+endTime,2023-04-13 22:53:41.326114
+liveTime(sec),117.932436
+startupDelay,1297
+Total stalling Event,0
+player width,1280
+player height,720
+time,100.238,104.422,110.186
+elapsed,0.000,4.184,9.948
+bitrate,1401,800,800
+framerate,29.97,29.97,29.97
+bufferLevel,31.21,30.809,30.347
+GMSD,0,0,0
+bitrateSwitch,0,1,0
+stalling,0,0,0
+stallingTime (sec),0,0,0
+Throughput (Kbps),12543,1983,2149
+
+IP,10.0.0.6
+Attribute,HIGH
+initTime,2023-04-13 22:51:44.084400
+endTime,2023-04-13 22:53:41.326116
+liveTime(sec),117.241716
+startupDelay,852
+Total stalling Event,0
+player width,1280
+player height,720
+time,92.113,103.471,134.250,141.819
+elapsed,0.000,11.358,42.137,49.706
+bitrate,1401,400,800,2000
+framerate,29.97,29.97,29.97,29.97
+bufferLevel,3.277,30.529,29.519,10.973
+GMSD,0,0,0,0
+bitrateSwitch,0,1,1,1
+stalling,0,0,0,0
+stallingTime (sec),0,0,0,0
+Throughput (Kbps),3631,1033,1471,3646
+
+Avg GMSD,0.8847293333333333
+Total Bitrate Switch,47
+Total Stalling Event, 0
+
