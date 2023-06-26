@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
-from threading import Timer
+from threading import Timer, Lock, Thread
 import time
 import base64
 from cluster import ClusterAttribute, Cluster
 from calculateSSIM import getClientSSIM
 from calculateGMSD import getClientGMSD
-from multiprocessing import Process, Lock, Manager
+# from multiprocessing import Process, Lock, Manager
 
 _DEBUG = False
 
@@ -59,7 +59,7 @@ class Player:
 		# player IP, Port address
 		self.ip = ip
 		self.port = port
-		self.processList = []
+		self.threadList = []
 
 		# player session live info
 		self._initTime = datetime.now()
@@ -94,9 +94,6 @@ class Player:
 		# self.isStalling = False
 		# self.checkInitDelay = True
 
-		self._manager = Manager()
-		self._global = self._manager.Namespace()
-
 		self._metricLock = Lock()
 		self._imageLock = Lock()
 		self._gmsdLock = Lock()
@@ -115,13 +112,13 @@ class Player:
 		# self.metrics = []
 		# self._imageList = []		
 
-		self._variable = self._manager.dict()
-		self.playerResolution = self._manager.dict()
+		self._variable = dict()
+		self.playerResolution = dict()
 		self.playerResolution["width"] = 0
 		self.playerResolution["height"] = 0
-		self._imageList = self._manager.list()
-		self._gmsdList = self._manager.list()
-		self.metrics = self._manager.list()
+		self._imageList = list()
+		self._gmsdList = list()
+		self.metrics = list()
 
 		self._variable['startupDelay'] = 0
 		self._variable['stallingEvent'] = 0
@@ -150,10 +147,10 @@ class Player:
 		self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
 		self._isDisconnected = True
 
-	def _processJoin(self):
-		for saveProcess in self.processList:
-			saveProcess.join()
-			self.processList.remove(saveProcess)
+	def _threadJoin(self):
+		for saveThread in self.threadList:
+			saveThread.join()
+			self.threadList.remove(saveThread)
 
 	def disconnectPlayer(self):
 		self._setTimer()
@@ -369,12 +366,12 @@ class Player:
 	def savePlayerData(self, playerdata, serverInitTime):
 		data = json.loads(playerdata)
 
-		saveProcess = Process(target=self._savePlayerData, args=(data, serverInitTime, self._global, self._locks), daemon=True)
+		saveThread = Thread(target=self._savePlayerData, args=(data, serverInitTime, self._global, self._locks), daemon=True)
 
-		self.processList.append(saveProcess)
-		saveProcess.start()
+		self.threadList.append(saveThread)
+		saveThread.start()
 
-		saveProcess.join()
+		saveThread.join()
 
 	def _savePlayerData(self, data, serverInitTime, _global, _locks):
 		_metricLock = _locks[0]

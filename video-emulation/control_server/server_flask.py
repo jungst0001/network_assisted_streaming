@@ -1,18 +1,18 @@
 from flask import Flask, request, Response, make_response
 from playerData import getPlayer, Player
 import json
-from playerHandler import PlayerHandler
-from bitrateCalculator import CAPACITY, BitrateCalculator
+from ControlServerHandler import ControlServerHandler
 from threading import Timer, Lock
 from serverData import ServerData
 from calculateGMSD import calculateGMSD, getFrame 
 import subprocess
 import traceback
 import cserverConfig
+from datetime import datetime
 
 import logging
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+log.setLevel(logging.DEBUG)
 
 playerLock = Lock()
 
@@ -32,9 +32,8 @@ log_getRLResult = cserverConfig.log_getRLResult
 
 ###########################################################
 
-playerHandler = PlayerHandler(sendRLData=log_sendRLData, getRLResult=log_getRLResult, 
+playerHandler = ControlServerHandler(sendRLData=log_sendRLData, getRLResult=log_getRLResult, 
 	onlyMonitorQoE=log_onlyMonitorQoE)
-bitrateCalculator = BitrateCalculator(playerHandler, CAPACITY)
 serverData = ServerData(playerHandler)
 playerHandler.setServerData(serverData)
 
@@ -113,7 +112,7 @@ def do_POST():
 	client_ip = request.environ['REMOTE_ADDR']
 	client_port = request.environ['REMOTE_PORT']
 	if client_ip == '127.0.0.1' or client_ip == '192.168.122.2':
-		self._changeQuality(request.get_json())
+		# self._changeQuality(request.get_json())
 		return
 	elif client_ip == '192.168.122.3':
 		client_ip = request.get_json()
@@ -199,6 +198,35 @@ def do_GET():
 
 	return body
 
+@app.route('/livetime', methods=['GET'])
+def do_GET_livetime():
+	client_ip = request.environ['REMOTE_ADDR']
+	height = request.args
+	
+
+	print(f'{height}')
+
+	server, requestURI = playerHandler.getLiveStreamingInfo()
+	if client_ip == '127.0.0.1':
+		# For testing
+		print(f'{_LOG} Reqest URI: {requestURI}')
+		server = 'http://127.0.0.1/'
+
+	livetime = round((datetime.now() - playerHandler.getServerInitTime()).total_seconds())
+
+	body = {}
+
+	body['url'] = f'{server}{requestURI}#t={livetime}'
+	# body['livetime'] = (datetime.now() - playerHandler.getServerInitTime()).total_seconds()
+	body['quality'] = 2
+
+	resp = make_response(json.dumps(body), 200)
+	resp.headers.add("Access-Control-Allow-Origin", "*")
+	# resp.headers.add('Access-Control-Allow-Headers', "*")
+	# resp.headers.add('Access-Control-Allow-Methods', "*")
+
+	return resp
+
 if __name__ == "__main__":
 	try:
 		app.run(host=IP, port=PORT)
@@ -207,16 +235,15 @@ if __name__ == "__main__":
 
 	print('Shutting down the web server')
 	
-	playerHandler.terminatePlayerProcess()
+	playerHandler.terminatePlayerThread()
 	print(f'terminate all player process')
 	# playerHandler.tmp_waitPlayerToBeDisconn()
 
-	print('save player data')
-	playerHandler.savePlayersData()
-	print(f'file write error number per a client: {playerHandler.fileWriteErrorPerClient}')
+	# print('save player data')
+	# playerHandler.savePlayersData()
+	# print(f'file write error number per a client: {playerHandler.fileWriteErrorPerClient}')
 
-	print(f'file metric length minimum: {playerHandler.min_metric}')
-	print(f'file metric length maximum: {playerHandler.max_metric}')
+	# print(f'file metric length minimum: {playerHandler.min_metric}')
+	# print(f'file metric length maximum: {playerHandler.max_metric}')
 
-	bitrateCalculator.destroyBitrateCalculator()
 	playerHandler.destroyPlayerHandler()

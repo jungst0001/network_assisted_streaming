@@ -1,42 +1,38 @@
-// function httpPOST(data){
-// 	console.log("start http POST");
-
-// 	let url = "http://192.168.122.3:8888";
-// 	let xhr = new XMLHttpRequest();
+async function httpInitGET(url, video){
+	console.log("start InitGet");
 	
-// 	xhr.onload = function () {
-// 		if (xhr.readyState == 4 && xhr.status == 200) {
-// 			console.log("print response data");
-// 			console.log(xhr.responseText);
-			
-// 			quality = xhr.responseText; // quality is global variable
+	const baseurl = url;
+	const screen_width = getVideoWidth(video);
+	const screen_height = getVideoHeight(video);
 
-// 		}
-// 	}
-	
-// 	xhr.open("POST", url); // false for synchrounous request
-// 	xhr.setRequestHeader("Content-Type", "application/json");
-// 	xhr.send(data);
-// }
+	const params = {
+		"width" : screen_width,
+		"height" : screen_height
+	};
 
-// function httpPOST_SSIM(data){
-// 	let url = "http://143.248.57.162:8889";
-// 	let xhr = new XMLHttpRequest();
-	
-// 	xhr.onload = function () {
-// 		if (xhr.readyState == 4 && xhr.status == 200) {
-// 			console.log("print response data");
-// 			console.log(xhr.responseText);
-			
-// 			quality = xhr.responseText; // quality is global variable
+	const queryParams = new URLSearchParams(params);
+	let queryString = queryParams.toString();
 
-// 		}
-// 	}
-	
-// 	xhr.open("POST", url); // false for synchrounous request
-// 	xhr.setRequestHeader("Content-Type", "application/json");
-// 	xhr.send(data);
-// }
+	const requrl = url + '?' + queryString;
+
+	console.log(requrl);
+
+	const response = await fetch(requrl);
+
+	return response.json();
+}
+
+async function httpPOST(data, url){
+	let response = await fetch(url, {
+		method: "POST",
+		body: data,
+		headers: {
+			"Content-Type": "application/json"
+		}
+	});
+
+	return response;
+}
 
 function arrayBufferToBase64( buffer ) {
     let binary = '';

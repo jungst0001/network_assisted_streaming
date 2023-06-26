@@ -19,9 +19,9 @@ MAX_CLIENT_NUM = 50
 isEMULATION = True
 
 cserver_user = 'wins'
-cserver_password = 'winslab'
+cserver_password = 'wins2-champion'
 
-cserver_IP = '192.168.122.3'
+cserver_IP = '127.0.0.1'
 cserver_PORT = 8888
 log_sendRLData = False
 log_onlyMonitorQoE = False
@@ -35,6 +35,12 @@ BPS_400 = '_400_dashinit.mp4'
 BPS_800 = '_800_dashinit.mp4'
 BPS_1200 = '_1400_dashinit.mp4'
 BPS_1600 = '_2000_dashinit.mp4'
+
+# Video url
+video_proxy_server = 'http://143.248.57.162/'
+video_list = [
+	'dash/BigBuckBunny/2sec_mod_BigBuckBunny.mpd'
+]
 
 # server DIR and file list
 LOCAL_DIR = '/home/wins/jin/video_emulation/control_server/'

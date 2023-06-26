@@ -41,7 +41,11 @@ class ServerData:
 
 		metric = {}
 		# tx, rx = traffic.get_speed('ens3') # KBps this is local
-		tx, rx = traffic.get_speed_video_server() # KBps this is remote
+		# tx, rx = traffic.get_speed_video_server() # KBps this is remote
+
+		# temperally setting..
+		tx = 0
+		rx = 0
 		
 		if self._ph is not None:
 			self._currentPlayersNum = len(self._ph.getPlayers()) 

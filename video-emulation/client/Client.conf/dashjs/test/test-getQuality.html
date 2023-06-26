@@ -1,0 +1,199 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Monitoring stream</title>
+    <script src="client/client.js"></script>
+    <script src="../dash.js/contrib/akamai/controlbar/ControlBar.js"></script>
+    <script src="../dash.js/dist/dash.all.debug.js"></script>
+    <script src="../dash.js/dist/dash.mss.debug.js"></script>
+    <script class="code">
+        async function init(callback) {
+            let video = document.querySelector("video");
+            const initResponse = await httpInitGET("http://127.0.0.1:8888/livetime", video);
+
+            callback(initResponse);
+        }
+
+        function video_play(initResponse) {
+            var video, player, url;
+            video = document.querySelector("video");
+            player = dashjs.MediaPlayer().create();
+
+            console.log(initResponse);
+            url = initResponse.url;
+            const initQuality = initResponse.quality; 
+
+            player.initialize(video, url, true);
+
+            player.updateSettings({
+                streaming: {
+                    bufferTimeAtTopQuality: 6,
+                    stableBufferTime: 4,
+                    fastSwitchEnabled: true,
+                    abr: {
+                    	ABRStrategy: "abrDynamic",
+                        //useDefaultABRRules: true
+                        autoSwitchBitrate: {video: false}
+                    },
+                    debug: {
+                        logLevel: dashjs.Debug.LOG_LEVEL_INFO
+                    }
+                }
+            });
+
+            var playback_startTime;
+            var playback_startTimeOnOff = true;
+
+            player.on(dashjs.MediaPlayer.events["PLAYBACK_STARTED"], function (){
+                if(playback_startTimeOnOff == true) {
+                    playback_startTime = player.time();
+                    playback_startTimeOnOff = false;
+                }
+            });
+
+            player.on(dashjs.MediaPlayer.events["PLAYBACK_NOT_ALLOWED"], function (){
+                video.muted = true;
+                // player.initialized(video, url, true);
+            });
+
+            player.on(dashjs.MediaPlayer.events["BUFFER_EMPTY"], function () {
+                console.log('buffer stalled');
+            });
+
+            player.on(dashjs.MediaPlayer.events["STREAM_INITIALIZED"], function () {
+                player.setQualityFor('video', initQuality);
+                console.log(player.getQualityFor('video'));
+
+                let video_width = getVideoWidth(video);
+                let video_height = getVideoHeight(video);
+                let jsonResolutionData = JSON.stringify({
+                    "client_ip" : "10.0.0.1",
+                    "resolution": {
+                        "width": video_width,
+                        "height": video_height
+                    }
+                });
+
+                httpPOST(jsonResolutionData, "http://127.0.0.1:8888");
+            });
+
+            var eventPoller = setInterval(function () {
+                var streamInfo = player.getActiveStream().getStreamInfo();
+                var dashMetrics = player.getDashMetrics();
+                var dashAdapter = player.getDashAdapter();
+                var frameNumber;
+
+                if (dashMetrics && streamInfo) {
+                    const periodIdx = streamInfo.index;
+                    var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+                    var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+                    var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
+                    var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo)
+                    
+                    var frameRate = adaptation.Representation_asArray.find(function (rep) {
+                        return rep.id === repSwitch.to
+                    }).frameRate;
+                    if (isNaN(frameRate) && frameRate.includes('/')) {
+                        var split_str = frameRate.split("/");
+                        frameRate = Number(split_str[0]) / Number(split_str[1])
+                        frameRate = frameRate.toFixed(2)
+                    }
+                    var playhead = player.time();
+                    frameNumber = Math.ceil(playhead * frameRate);
+                    var d = new Date();
+                    videoDelay = Math.round((d.getTime() / 1000) + playback_startTime - Number(player.timeAsUTC()));
+                    document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
+                    document.getElementById('framerate').innerText = frameRate + " fps";
+                    document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
+                    document.getElementById('framenumber').innerText = frameNumber;
+                    document.getElementById('playhead').innerText = playhead;
+                    document.getElementById('videoDelay').innerText = videoDelay;
+                }
+
+                if (videoDelay >= 6) {
+                    console.log('video delay upper 6sec');
+                    let seekTime = Math.round(player.time() + videoDelay);
+                    player.seek(seekTime);
+                }
+            }, 1000);
+
+            // var hearbeat =  setInterval(function () {
+            //     var jsonData = JSON.stringify({
+            //         "heartbeat":"hearbeat"
+            //     });
+
+            //     httpPOST(jsonData)
+            // }, 500);
+
+
+            if (video.webkitVideoDecodedByteCount !== undefined) {
+                var lastDecodedByteCount = 0;
+                const bitrateInterval = 5;
+                var bitrateCalculator = setInterval(function () {
+                    var calculatedBitrate = (((video.webkitVideoDecodedByteCount - lastDecodedByteCount) / 1000) * 8) / bitrateInterval;
+                        document.getElementById('calculatedBitrate').innerText = Math.round(calculatedBitrate) + " Kbps";
+                    lastDecodedByteCount = video.webkitVideoDecodedByteCount;
+                }, bitrateInterval * 1000);
+            } else {
+                document.getElementById('chrome-only').style.display = "none";
+            }
+        }
+    </script>
+	<style>
+        video {
+            width: 854px;
+            height: 480px;
+        }
+
+        #container {
+            display: inline-block;
+        }
+
+        #container > div {
+            display: inline-block;
+            float: left;
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="video-container">
+            <video data-dashjs-player autoplay controls="true">
+            </video>
+        </div>
+        <div>
+            <strong>Reported bitrate:</strong>
+            <span id="reportedBitrate"></span>
+            <br/>
+            <strong>Buffer level:</strong>
+            <span id="bufferLevel"></span>
+            <div id="chrome-only">
+                <strong>Calculated bitrate:</strong>
+                <span id="calculatedBitrate"></span>
+            </div>
+            <br/>
+            <strong>Framerate:</strong>
+            <span id="framerate"></span>
+            <br/>
+            <strong>Frame number:</strong>
+            <span id="framenumber"></span>
+            <br/>
+            <strong>Playhead:</strong>
+            <span id="playhead"></span>
+            <br/>
+            <strong>Video Delay:</strong>
+            <span id="videoDelay"></span>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            init(video_play);
+        });
+    </script>
+<!--     <a href="javascript:void(0);" onclick="downloadImg('/home/wins/snapshot/snapshot.jpeg')" class="main-btn__download">
+        <span class="txt-hidden">Download image</span>
+    </a> -->
+</body>
+</html>

@@ -1,5 +1,5 @@
 import time, os, sys
-import mserverConfig 
+# import mserverConfig 
 import paramiko, scp
 
 class SSHManager: 
@@ -57,16 +57,16 @@ class SSHManager:
 		stdin, stdout, stderr = self.ssh_client.exec_command(command) 
 		return stdout.readlines()
 
-def get_bytes_video_server(t):
-	sshManager = SSHManager()
-	sshManager.create_ssh_client(mserverConfig.mserver_IP,
-		mserverConfig.mserver_user, mserverConfig.mserver_password)
+# def get_bytes_video_server(t):
+# 	sshManager = SSHManager()
+# 	sshManager.create_ssh_client(mserverConfig.mserver_IP,
+# 		mserverConfig.mserver_user, mserverConfig.mserver_password)
 
-	lines = sshManager.send_command('cat /sys/class/net/' + mserverConfig.iface + '/statistics/' + t + '_bytes')
+# 	lines = sshManager.send_command('cat /sys/class/net/' + mserverConfig.iface + '/statistics/' + t + '_bytes')
 
-	sshManager.close_ssh_client()
+# 	sshManager.close_ssh_client()
 
-	return int(lines[0])
+# 	return int(lines[0])
 
 def get_bytes(t, iface='enp30s0'):
 	with open('/sys/class/net/' + iface + '/statistics/' + t + '_bytes', 'r') as f:
