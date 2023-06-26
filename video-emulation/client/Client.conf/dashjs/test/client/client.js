@@ -67,7 +67,7 @@ function takeSnapshoot(video) {
 	let ctx = canvas.getContext('2d');
 	ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-	let dataURI = canvas.toDataURL('image/jpeg')
+	let dataURI = canvas.toDataURL('image/jpeg', 0.5).substring(22);
 
 	// let dataURI = canvas.toDataURL('image/jpeg').substring(21); // 'image/png' or 'image/jpeg'
 
@@ -98,7 +98,7 @@ function getThroughput(type, httpRequests, currentRequestHead, metricsInterval) 
     return throughput;
 }
 
-function postTimerHandler(player, currentRequestHead, ip, monitoringInterval, cserver_url) {
+function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval) {
 	let streamInfo = player.getActiveStream().getStreamInfo();
 	let dashMetrics = player.getDashMetrics();
 	let dashAdapter = player.getDashAdapter();
@@ -111,33 +111,56 @@ function postTimerHandler(player, currentRequestHead, ip, monitoringInterval, cs
 		let bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
 		let bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
 		let adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
-		// var throughput = player.getAverageThroughput('video');
-		// var throughput = getThroughput('video', dashMetrics.getCurrentHttpRequest('video'));
-		let throughput = getThroughput('video', dashMetrics.getHttpRequests('video'), currentRequestHead[0], monitoringInterval);
-		currentRequestHead[0] = dashMetrics.getHttpRequests('video').length;
+		
 		let frameRate = adaptation.Representation_asArray.find(function (rep) {
 			return rep.id === repSwitch.to
 		}).frameRate;
-		if (frameRate.includes('/')) {
+		if (isNaN(frameRate) && frameRate.includes('/')) {
 			let split_str = frameRate.split("/");
 			frameRate = Number(split_str[0]) / Number(split_str[1])
 			frameRate = frameRate.toFixed(2)
 		}
+		let playhead = player.time();
+		let frameNumber = Math.ceil(playhead * frameRate);
+		let dataURI = 0;
 
-		console.log('throughput is:');
-		console.log(throughput);
+		if (event.request.url.includes('init')){
+			console.log('get init.mp4');
+		} else {
+			dataURI = takeSnapshoot(video);
+		}
 
+		if (isStalling) {
+			isStalling = "True";
+		} else {
+			isStalling = "False";
+		}
+
+		let d = new Date();
+		let eInterval = d.getTime() - eventInterval.getTime();
+		let currentQuality = player.getQualityFor();
 
 		let jsonData = JSON.stringify({
 			"client_ip" : ip,
 			"bufferLevel": bufferLevel,
 			"bitrate": bitrate,
 			"framerate": frameRate,
-			"throughput": throughput,
-			"index": currentRequestHead[1]
+			"playhead": playhead,
+			"request_url": event.request.url,
+			"request_url_quality": event.request.quality,
+			"request_url_startTime": event.request.startTime,
+			"request_length": event.request.byteTotal,
+			"response_length": event.response.byteLength,
+			"stalling": isStalling,
+			"requestInterval": eInterval,
+			"currentQuality": currentQuality,
+			"captured": {
+				"frameNumber": frameNumber,
+				"type": "jpeg",
+				"image": dataURI
+			}
 		});
 		httpPOST(jsonData, cserver_url);
-		currentRequestHead[1] += 1
 	}
 }
 

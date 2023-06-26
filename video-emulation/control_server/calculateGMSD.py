@@ -21,7 +21,7 @@ def getFrame(vidcap, sec=0, count=0, name='video'):
     if hasFrames:
         image_name = name + '_' + str(count) + '.jpeg' # .png to .jpeg
         # [cv2.IMWRITE_JPEG_QUALITY, 95] (default is 95, high quality:100)
-        cv2.imwrite("images/server_images/" + image_name, image, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        cv2.imwrite("images/server_images/" + image_name, image, [cv2.IMWRITE_JPEG_QUALITY, 50])
 
     return hasFrames, image_name
 
@@ -42,17 +42,15 @@ def getOriAndCompImage(client_image_name, frame_number):
 
     return ori_img, dist_img
 
-def getClientGMSD(client_image_name, frame_number):
-    vidCp_1600 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_1600)
-    succ1600, img1600 = getFrame(vidCp_1600, 0, frame_number, BPS_1600)
-    # vidCp_1600 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_400)
-    # succ1600, img1600 = getFrame(vidCp_1600, 0, frame_number, BPS_400)
+def getClientGMSD(client_image_name, frame_number, chunkMP4, currentQuality):
+    chunkVidCp = cv2.VideoCapture(chunkMP4)
+    _, server_image_name = getFrame(chunkVidCp, 0, frame_number, currentQuality)
 
-    ori_img = cv2.imread('images/server_images/' + img1600, cv2.IMREAD_COLOR)
+    ori_img = cv2.imread('images/server_images/' + server_image_name, cv2.IMREAD_COLOR)
     dist_img = cv2.imread('images/' + client_image_name, cv2.IMREAD_COLOR)
-    score_v1600 = calculateGMSD(ori_img, dist_img)
+    gmsd_score = calculateGMSD(ori_img, dist_img)
 
-    return f'{score_v1600:.5f}'
+    return f'{gmsd_score:.5f}'
 
 def calculateGMSD(image_original, image_compare):
     # ori_img = cv2.imread(image_original, cv2.IMREAD_COLOR)

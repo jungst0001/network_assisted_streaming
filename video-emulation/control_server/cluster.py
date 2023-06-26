@@ -1,36 +1,33 @@
 from enum import Enum, auto
 
 class ClusterAttribute(Enum):
-	HIGH = auto()
-	MEDIUM = auto()
-	LOW = auto()
+	FHD = 1080
+	HD = 720
+	SD = 480
 
 class Cluster:
 	def __init__(self, attribute:ClusterAttribute):
 		self._log = '[Cluster]'
 
 		self.attribute = attribute
-		self._players = []
+		self._currClients = []
+		self._disconnClients = []
 
-		self._usedBitrate = 0
 		self._qualityIndex = 0
 
-	def getClusterPlayers(self):
-		return self._players
+	def getCurrentClients(self):
+		return self._currClients
+
+	def getDisconnClients(self):
+		return self._disconnClients
 
 	def setClusterQualityIndex(self, qualityIndex):
 		self._qualityIndex = qualityIndex
-		for p in self._players:
-			p.setQualityIndex(self._qualityIndex)
+		for clients in self._currClients:
+			clients.setQualityIndex(self._qualityIndex)
 
 	def getClusterQualityIndex(self):
 		return self._qualityIndex
-
-	def setUsedBitrate(self, usedBitrate):
-		self._usedBitrate = usedBitrate
-
-	def getUsedBitrate(self):
-		return self._usedBitrate
 
 if __name__ == "__main__":
 	LOG = '[cluster.py main]'

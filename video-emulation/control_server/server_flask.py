@@ -165,7 +165,7 @@ def do_POST():
 
 			return json.dumps(body)
 
-		player.savePlayerData(request.data.decode(), playerHandler.getServerInitTime())
+		player.saveClientData(request.data.decode(), playerHandler.getServerInitTime())
 	except ConnectionResetError:
 		print(f'{_LOG} the client {client_ip} is disconnected')
 	except Exception:

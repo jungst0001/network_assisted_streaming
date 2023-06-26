@@ -16,6 +16,9 @@
 
         function video_play(initResponse) {
             var video, player, url;
+            
+            var client_ip = "10.0.0.1";
+            var cserver_url = "http://127.0.0.1:8888/";
             video = document.querySelector("video");
             player = dashjs.MediaPlayer().create();
 
@@ -27,7 +30,6 @@
 
             player.updateSettings({
                 streaming: {
-                    bufferTimeAtTopQuality: 6,
                     stableBufferTime: 4,
                     fastSwitchEnabled: true,
                     abr: {
@@ -43,6 +45,8 @@
 
             var playback_startTime;
             var playback_startTimeOnOff = true;
+            var isStalling = false;
+            var eventInterval = new Date();
 
             player.on(dashjs.MediaPlayer.events["PLAYBACK_STARTED"], function (){
                 if(playback_startTimeOnOff == true) {
@@ -51,12 +55,19 @@
                 }
             });
 
+            player.on(dashjs.MediaPlayer.events["FRAGMENT_LOADING_COMPLETED"], function (e) {
+                postHandler(player, video, e, client_ip, cserver_url, isStalling, eventInterval);
+                isStalling = false;
+                eventInterval = new Date();
+            }
+
             player.on(dashjs.MediaPlayer.events["PLAYBACK_NOT_ALLOWED"], function (){
                 video.muted = true;
                 // player.initialized(video, url, true);
             });
 
             player.on(dashjs.MediaPlayer.events["BUFFER_EMPTY"], function () {
+                isStalling = true;
                 console.log('buffer stalled');
             });
 
@@ -67,7 +78,7 @@
                 let video_width = getVideoWidth(video);
                 let video_height = getVideoHeight(video);
                 let jsonResolutionData = JSON.stringify({
-                    "client_ip" : "10.0.0.1",
+                    "client_ip" : client_ip,
                     "resolution": {
                         "width": video_width,
                         "height": video_height
@@ -78,29 +89,29 @@
             });
 
             var eventPoller = setInterval(function () {
-                var streamInfo = player.getActiveStream().getStreamInfo();
-                var dashMetrics = player.getDashMetrics();
-                var dashAdapter = player.getDashAdapter();
-                var frameNumber;
+                let streamInfo = player.getActiveStream().getStreamInfo();
+                let dashMetrics = player.getDashMetrics();
+                let dashAdapter = player.getDashAdapter();
+                let frameNumber;
 
                 if (dashMetrics && streamInfo) {
                     const periodIdx = streamInfo.index;
-                    var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
-                    var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
-                    var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
-                    var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo)
+                    let repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+                    let bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+                    let bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
+                    let adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo)
                     
-                    var frameRate = adaptation.Representation_asArray.find(function (rep) {
+                    let frameRate = adaptation.Representation_asArray.find(function (rep) {
                         return rep.id === repSwitch.to
                     }).frameRate;
                     if (isNaN(frameRate) && frameRate.includes('/')) {
-                        var split_str = frameRate.split("/");
+                        let split_str = frameRate.split("/");
                         frameRate = Number(split_str[0]) / Number(split_str[1])
                         frameRate = frameRate.toFixed(2)
                     }
-                    var playhead = player.time();
+                    let playhead = player.time();
                     frameNumber = Math.ceil(playhead * frameRate);
-                    var d = new Date();
+                    let d = new Date();
                     videoDelay = Math.round((d.getTime() / 1000) + playback_startTime - Number(player.timeAsUTC()));
                     document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
                     document.getElementById('framerate').innerText = frameRate + " fps";

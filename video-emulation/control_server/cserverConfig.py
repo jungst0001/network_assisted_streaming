@@ -42,6 +42,9 @@ video_list = [
 	'dash/BigBuckBunny/2sec_mod_BigBuckBunny.mpd'
 ]
 
+# Cache Info
+LOCAL_CACHE_DIR = 'cacheStorage/'
+
 # server DIR and file list
 LOCAL_DIR = '/home/wins/jin/video_emulation/control_server/'
 LOCAL_DATASET_DIR = LOCAL_DIR + 'DataStorage/'

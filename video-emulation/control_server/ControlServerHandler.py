@@ -60,15 +60,19 @@ class ControlServerHandler:
 	def getServerInitTime(self):
 		return self._serverInitTime
 
-	def _clustering(self):
-		for p in self._currPlayers:
-			self._clusters[p.getAttribute()].getClusterPlayers().append(p)
+	def setCluster(self, client):
+		self._clusters[client.getAttribute()].getClusterPlayers().append(client)
 
 	def setServerData(self, serverData):
 		self._serverData = serverData
 
 	def _checkPlayers(self):
 		for p in self._currPlayers:
+			if p.getAttribute == None:
+				if p.getScreenResolution()['height'] != 0:
+					p.setAttribute(ClusterAttribute(p.getScreenResolution()['height']))
+					self.setCluster(p)
+
 			if p.isDisconnected():
 				self._currPlayers.remove(p)
 				self._clusters[p.getAttribute()].getClusterPlayers().remove(p)
