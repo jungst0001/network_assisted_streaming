@@ -231,6 +231,7 @@ class ControlServerHandler:
 				f.write(f'liveTime(sec),{p.getPlayerLiveTime().total_seconds()}\n')
 				# f.write(f'startupDelay,{p.getStartupDelay()}\n')
 				f.write(f'Total stalling Event,{p.getStallingEvent()}\n')
+				f.write(f'Total Chunk Skip Event,{p.getTotalChunkSkipEvent()}\n')
 				f.write(f'client width,{p.getPlayerResolution()["width"]}\n')
 				f.write(f'client height,{p.getPlayerResolution()["height"]}\n')
 
@@ -288,6 +289,16 @@ class ControlServerHandler:
 #				for i in range(len(metrics)-1):
 #					f.write(f'{metrics[i]["initDelayTime"]},')
 #				f.write(f'{metrics[-1]["initDelayTime"]}\n')
+
+				f.write(f'chunkSkip,')
+				for i in range(len(metrics)-1):
+					f.write(f'{metrics[i]["chunk_skip"]},')
+				f.write(f'{metrics[-1]["chunk_skip"]}\n')
+
+				f.write(f'totalChunkSkipEvent,')
+				for i in range(len(metrics)-1):
+					f.write(f'{metrics[i]["totalChunkSkipEvent"]},')
+				f.write(f'{metrics[-1]["totalChunkSkipEvent"]}\n')
 			
 				f.write(f'stalling,')
 				for i in range(len(metrics)-1):

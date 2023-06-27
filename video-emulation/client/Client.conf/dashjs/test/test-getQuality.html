@@ -47,6 +47,7 @@
             var playback_startTimeOnOff = true;
             var isStalling = false;
             var eventInterval = new Date();
+            var chunk_skip_event = 0;
 
             player.on(dashjs.MediaPlayer.events["PLAYBACK_STARTED"], function (){
                 if(playback_startTimeOnOff == true) {
@@ -56,9 +57,10 @@
             });
 
             player.on(dashjs.MediaPlayer.events["FRAGMENT_LOADING_COMPLETED"], function (e) {
-                postHandler(player, video, e, client_ip, cserver_url, isStalling, eventInterval);
+                postHandler(player, video, e, client_ip, cserver_url, isStalling, eventInterval, chunk_skip_event);
                 isStalling = false;
                 eventInterval = new Date();
+                chunk_skip_event = 0;
             });
 
             player.on(dashjs.MediaPlayer.events["PLAYBACK_NOT_ALLOWED"], function (){
@@ -73,7 +75,7 @@
 
             player.on(dashjs.MediaPlayer.events["STREAM_INITIALIZED"], function () {
                 player.setQualityFor('video', initQuality);
-                console.log(player.getQualityFor('video'));
+                // console.log(player.getQualityFor('video'));
 
                 let video_width = getVideoWidth(video);
                 let video_height = getVideoHeight(video);
@@ -125,6 +127,7 @@
                     console.log('video delay upper 6sec');
                     let seekTime = Math.round(player.time() + videoDelay);
                     player.seek(seekTime);
+                    chunk_skip_event = 1;
                 }
             }, 1000);
 

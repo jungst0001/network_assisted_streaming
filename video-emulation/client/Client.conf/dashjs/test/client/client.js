@@ -98,7 +98,7 @@ function getThroughput(type, httpRequests, currentRequestHead, metricsInterval) 
     return throughput;
 }
 
-function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval) {
+function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval, chunk_skip_event) {
 	let streamInfo = player.getActiveStream().getStreamInfo();
 	let dashMetrics = player.getDashMetrics();
 	let dashAdapter = player.getDashAdapter();
@@ -153,6 +153,7 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 			"stalling": isStalling,
 			"requestInterval": eInterval,
 			"currentQuality": currentQuality,
+			"chunk_skip": chunk_skip_event,
 			"captured": {
 				"frameNumber": frameNumber,
 				"type": "jpeg",

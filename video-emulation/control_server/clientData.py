@@ -79,6 +79,9 @@ class ClientData:
 	def getTotalStallingEvent(self):
 		return self.metrics[-1]['totalStallingEvent']
 
+	def getTotalChunkSkipEvent(self):
+		return self.metrics[-1]['totalChunkSkipEvent']
+
 	def _getInitWithChunkURL(self, frameNumber, framerate, currentQuality, chunkUnit=2):
 		current_playhead = frameNumber / framerate
 		chunkNumber = math.ceil(current_playhead / chunkUnit)
@@ -242,6 +245,11 @@ class ClientData:
 		else:
 			return 0
 
+	def _getChunkSkip(self, data):
+		chunk_skip_num = data['chunk_skip']
+
+		return chunk_skip_num
+
 	def saveClientData(self, clientData, serverInitTime):
 		data = json.loads(clientData)
 
@@ -376,15 +384,24 @@ class ClientData:
 		# save stalling
 		metric['stalling'] = self._isStalling(data)
 
+		# save num of chunk skip
+		metric['chunk_skip'] = self._getChunkSkip(data)
+
 		if len(self.metrics) == 0:
 			print(f'{self._log} | {self.ip} initial bitrate: {metric["bitrate"]}')
 			metric['bitrateSwitch'] = 0
 			metric['totalStallingEvent'] = 0
+			metric['totalChunkSkipEvent'] = 0
 		else:
 			if metric['stalling'] == 1:
 				metric['totalStallingEvent'] = self.metrics[-1]['totalStallingEvent'] + 1
 			else:
 				metric['totalStallingEvent'] = self.metrics[-1]['totalStallingEvent']
+
+			if metric['chunk_skip'] == 1:
+				metric['totalChunkSkipEvent'] = self.metrics[-1]['totalChunkSkipEvent'] + 1
+			else:
+				metric['totalChunkSkipEvent'] = self.metrics[-1]['totalChunkSkipEvent']
 
 			if int(self.metrics[-1]['bitrate']) == int(metric['bitrate']):
 				metric['bitrateSwitch'] = 0
