@@ -138,7 +138,7 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 
 		let d = new Date();
 		let eInterval = d.getTime() - eventInterval.getTime();
-		let currentQuality = player.getQualityFor();
+		let currentQuality = player.getQualityFor('video');
 
 		let jsonData = JSON.stringify({
 			"client_ip" : ip,
@@ -149,7 +149,6 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 			"request_url": event.request.url,
 			"request_url_quality": event.request.quality,
 			"request_url_startTime": event.request.startTime,
-			"request_length": event.request.byteTotal,
 			"response_length": event.response.byteLength,
 			"stalling": isStalling,
 			"requestInterval": eInterval,
@@ -160,6 +159,7 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 				"image": dataURI
 			}
 		});
+		
 		httpPOST(jsonData, cserver_url);
 	}
 }

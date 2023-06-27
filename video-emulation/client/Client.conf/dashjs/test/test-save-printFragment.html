@@ -66,11 +66,14 @@
                 // let parsedFile = ISOBoxer.parseBuffer(e);
                 // console.log(parsedFile.boxes);
                 let d = new Date();
+                // console.log(player.getQualityFor('video'));
                 console.log(e.request);
                 console.log(e.request.url);
+
                 // console.log(e.request.delayLoadingTime.timeAsUTC());
                 console.log(e.request.delayLoadingTime);
                 console.log(e.request.firstByteDate.getTime());
+                console.log(e.request.bytesTotal);
                 console.log(e.response.byteLength);
                 console.log(e.response);
                 // console.log(arrayBufferToBase64(e.response));
@@ -109,7 +112,7 @@
                     var frameRate = adaptation.Representation_asArray.find(function (rep) {
                         return rep.id === repSwitch.to
                     }).frameRate;
-                    if (frameRate.includes('/')) {
+                    if (isNaN(frameRate) && frameRate.includes('/')) {
                         var split_str = frameRate.split("/");
                         frameRate = Number(split_str[0]) / Number(split_str[1])
                         frameRate = frameRate.toFixed(2)

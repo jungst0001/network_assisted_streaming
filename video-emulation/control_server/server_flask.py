@@ -1,5 +1,5 @@
 from flask import Flask, request, Response, make_response
-from playerData import getPlayer, Player
+from clientData import ClientData
 import json
 from ControlServerHandler import ControlServerHandler
 from threading import Timer, Lock
@@ -9,6 +9,8 @@ import subprocess
 import traceback
 import cserverConfig
 from datetime import datetime
+import psutil
+import math
 
 import logging
 log = logging.getLogger('werkzeug')
@@ -96,7 +98,7 @@ def do_OPTIONS():
 	resp = make_response()
 	resp.headers.add("Access-Control-Allow-Origin", "*")
 	resp.headers.add('Access-Control-Allow-Headers', "*")
-	resp.headers.add('Access-Control-Allow-Methods', "*")
+	resp.headers.add('Access-Control-Allow-Methods', "GET, POST")
 	
 	return resp
 
@@ -111,30 +113,13 @@ def _changeQuality(data):
 def do_POST():
 	client_ip = request.environ['REMOTE_ADDR']
 	client_port = request.environ['REMOTE_PORT']
-	if client_ip == '127.0.0.1' or client_ip == '192.168.122.2':
-		# self._changeQuality(request.get_json())
+
+	try:
+		data = request.get_json()
+		client_ip = data['client_ip']
+	except KeyError:
+		print(f'{_LOG} client ip cannot be specific {data}')
 		return
-	elif client_ip == '192.168.122.3':
-		client_ip = request.get_json()
-
-		try:
-			playerLock.acquire()
-			player = playerHandler.getPlayer(client_ip)
-		finally:
-			playerLock.release()
-
-		player.disconnectPlayer()
-
-		print(f'{_LOG} Manager ordered that the client {client_ip} is disconnected')
-		return
-
-	if EMULATION:
-		try:
-			data = request.get_json()
-			client_ip = data['client_ip']
-			# print(data)
-		except KeyError:
-			return
 
 	isQuality = False
 
@@ -144,14 +129,17 @@ def do_POST():
 	except KeyError:
 		pass
 
+	player = None
 	try:
 		playerLock.acquire()
+		# print(f'{_LOG} client post reqeust received')
 		player = playerHandler.getPlayer(client_ip, client_port)
 	finally:
 		playerLock.release()
 	
 	try:
 		if player is None:
+			print(f'{_LOG} player is none, request over')
 			return
 		elif isQuality:
 			quality = player.getQualityIndex()
@@ -209,10 +197,10 @@ def do_GET_livetime():
 	server, requestURI = playerHandler.getLiveStreamingInfo()
 	if client_ip == '127.0.0.1':
 		# For testing
-		print(f'{_LOG} Reqest URI: {requestURI}')
+		print(f'{_LOG} Request URI: {requestURI}')
 		server = 'http://127.0.0.1/'
 
-	livetime = round((datetime.now() - playerHandler.getServerInitTime()).total_seconds())
+	livetime = math.floor((datetime.now() - playerHandler.getServerInitTime()).total_seconds())
 
 	body = {}
 
@@ -235,8 +223,13 @@ if __name__ == "__main__":
 
 	print('Shutting down the web server')
 	
-	playerHandler.terminatePlayerThread()
+	playerHandler.terminateClientThread()
 	print(f'terminate all player process')
+
+	for proc in psutil.process_iter():
+		if len(proc.cmdline()) == 2:
+			if proc.cmdline()[1] in "server_flask.py":
+				proc.kill()
 	# playerHandler.tmp_waitPlayerToBeDisconn()
 
 	# print('save player data')
@@ -246,4 +239,4 @@ if __name__ == "__main__":
 	# print(f'file metric length minimum: {playerHandler.min_metric}')
 	# print(f'file metric length maximum: {playerHandler.max_metric}')
 
-	playerHandler.destroyPlayerHandler()
+	# playerHandler.destroyPlayerHandler()

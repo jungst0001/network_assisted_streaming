@@ -44,6 +44,7 @@ video_list = [
 
 # Cache Info
 LOCAL_CACHE_DIR = 'cacheStorage/'
+FIRSTURL_CACHE_KEY = 'http://video_server/'
 
 # server DIR and file list
 LOCAL_DIR = '/home/wins/jin/video_emulation/control_server/'

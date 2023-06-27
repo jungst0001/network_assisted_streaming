@@ -59,7 +59,7 @@
                 postHandler(player, video, e, client_ip, cserver_url, isStalling, eventInterval);
                 isStalling = false;
                 eventInterval = new Date();
-            }
+            });
 
             player.on(dashjs.MediaPlayer.events["PLAYBACK_NOT_ALLOWED"], function (){
                 video.muted = true;

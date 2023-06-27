@@ -8,6 +8,7 @@ from cluster import ClusterAttribute, Cluster
 from calculateSSIM import getClientSSIM
 from calculateGMSD import getClientGMSD
 from CacheHandler import CacheHandler
+import traceback
 
 _DEBUG = False
 
@@ -43,7 +44,6 @@ class ClientData:
 		self._initTimeStr = self._initTime.strftime('%y%m%d_%H:%M:%S')
 		self._endTime = 0
 		self._endTimeStr = None
-		self._interval = interval
 		self._isDisconnected = False
 
 		# client screen info
@@ -76,8 +76,13 @@ class ClientData:
 
 		return self.screen_resolution
 
-	def _getInitWithChunkURL(self, playhead, currentQuality, chunkUnit=2):
-		chunkNumber = math.ceil(playhead / chunkUnit)
+	def getTotalStallingEvent(self):
+		return self.metrics[-1]['totalStallingEvent']
+
+	def _getInitWithChunkURL(self, frameNumber, framerate, currentQuality, chunkUnit=2):
+		current_playhead = frameNumber / framerate
+		chunkNumber = math.ceil(current_playhead / chunkUnit)
+		print(f'{self._log} playhead: {current_playhead:.2f}, chunkNumber: {chunkNumber}')
 		chunkKey = f'2s{chunkNumber}.m4s'
 
 		initURL = None
@@ -86,18 +91,29 @@ class ClientData:
 				initURL = init['url']
 
 		chunkURL = None
-		for chunk in self.chunkList:
-			if chunk['url'] in chunkKey:
-				if chunk['quality'] == currentQuality:
-					chunkURL = chunk['url']
+		checkOneMoreChunkURL = True
+		while checkOneMoreChunkURL:
+			# print(f'{self._log} chunklist: {self.chunkList}')
+			for chunk in self.chunkList:
+				if chunkKey in chunk['url']:
+					if chunk['quality'] == currentQuality:
+						chunkURL = chunk['url']
+
+			if chunkURL is None:
+				time.sleep(0.5)
+				checkOneMoreChunkURL = False
+			else:
+				break
 
 		return initURL, chunkURL
 
-	def _getServerImageFromCache(self, frameNumber, playhead, currentQuality):
-		initURL, chunkURL = self._getInitWithChunkURL(playhead, currentQuality)
+	def _getServerImageFromCache(self, frameNumber, framerate, currentQuality):
+		initURL, chunkURL = self._getInitWithChunkURL(frameNumber, framerate, currentQuality)
 
-		if (initURL is None) or (chunk is None):
+		if (initURL is None) or (chunkURL is None):
 			print(f'{self._log} {self.ip} init url or chunk url is None')
+			self.chunkInCache[frameNumber] = None
+			return
 
 		chunkMP4 = self.ch.getChunkMP4(initURL, chunkURL)
 		if chunkMP4 is None:
@@ -107,8 +123,7 @@ class ClientData:
 
 	def _saveImageData(self, data):
 		# save Image data and calculate SSIM / GMSD
-		if _DEBUG:
-			print(f'{self._log} the client {self.ip} _saveImageData()')
+		# print(f'{self._log} the client {self.ip} _saveImageData()')
 
 		try:
 			imageData = data['captured']
@@ -118,11 +133,13 @@ class ClientData:
 			# print(type(str(imageData)))
 			# print(f'{self._log} {self.ip} image: {str(imageData)[0:20]}')
 
-			frameNumber = imageData["frameNumber"] -> chunk를 얻고
+			frameNumber = imageData["frameNumber"]
 			extension = imageData["type"]
 			image = imageData["image"]
+			framerate = self._getFrameRate(data)
 
-			cacheThread = Thread(target=self._getServerImageFromCache, args=(frameNumber, playhead, self._currentQuality),)
+			cacheThread = Thread(target=self._getServerImageFromCache, args=(frameNumber, framerate, self._currentQuality),)
+			cacheThread.daemon = True
 			cacheThread.start()
 
 			self.rtm.imageLock.acquire()
@@ -131,8 +148,7 @@ class ClientData:
 				_currentImageName = self.ip + "-" + str(bitrate) + "-" + str(frameNumber) + '.' + extension
 
 				imageInfo = (_currentImageName, _currentFrameNumber)
-				# self._imageList.append(imageInfo)
-				self._imageList.append(imageInfo)
+				self.imageList.append(imageInfo)
 				
 				f = open('images/' + self.ip + "-" + str(bitrate) + "-" + str(frameNumber) + '.' + extension, 'wb')
 				f.write(base64.b64decode(image))
@@ -141,22 +157,27 @@ class ClientData:
 				self.rtm.imageLock.release()
 				pass
 
-			if len(self._imageList) != 0:
+			if len(self.imageList) != 0:
 				self.rtm.pqLock.acquire()
 				try:
-					head_imageInfo = self._imageList[0]
+					head_imageInfo = self.imageList[0]
 					self.imageList.remove(head_imageInfo)
 					
 					cacheThread.join()
 					chunkMP4 = self.chunkInCache[frameNumber]
-					currentGMSD = getClientGMSD(head_imageInfo[0], head_imageInfo[1], chunkMP4, self._currentQuality)
-					if _DEBUG:
-						print(f'{self._log} the player {self.ip} gmsd is calculated: {currentGMSD}')
+					if chunkMP4 is None:
+						print(f'{self._log} chunk with frame number {frameNumber} is not cached')
+						currentGMSD = 0
+					else:
+						currentGMSD = getClientGMSD(head_imageInfo[0], head_imageInfo[1], framerate, chunkMP4, self._currentQuality)
 
-					self.pqList.append(currentGMSD)
+					print(f'{self._log} the client {self.ip} gmsd with frame number: {frameNumber} is calculated: {currentGMSD}')
+
+					self.pqList.append((frameNumber, currentGMSD))
 				except:
+					print(traceback.format_exc())
 					if _DEBUG:
-						print(f'{self._log} the player {self.ip} gmsd is not calculated')
+						print(f'{self._log} the client {self.ip} gmsd is not calculated')
 					pass
 				finally:
 					self.rtm.pqLock.release()
@@ -184,7 +205,7 @@ class ClientData:
 		# if player is closed, this message is received
 		try:
 			status = data["status"]
-			print(f'{self._log} {self.ip} - player status: {status}')
+			print(f'{self._log} {self.ip} client status: {status}')
 
 			self._isDisconnected = True
 
@@ -202,7 +223,7 @@ class ClientData:
 		# save Screen resolution
 		try:
 			screen_resolution = data["resolution"]
-
+			self.screen_resolution = {}
 			self.screen_resolution["width"] = screen_resolution["width"]
 			self.screen_resolution["height"] = screen_resolution["height"]
 
@@ -213,7 +234,7 @@ class ClientData:
 			return False
 
 	def _isStalling(self, data):
-		isStalling = data['isStalling']
+		isStalling = data['stalling']
 
 		if isStalling == "True":
 			print(f'{self._log} | {self.ip} stalling event occurs')
@@ -226,72 +247,110 @@ class ClientData:
 
 		requestThread = Thread(target=self._saveClientData, args=(data, serverInitTime),)
 
+		# if _DEBUG:
+		# 	print(f'{self._log} request start')
+
 		self.rtm.requestThreadList.append(requestThread)
+		requestThread.daemon = True
 		requestThread.start()
 
 		requestThread.join()
-		self.requestThreadList.remove(rThread)
+		self.rtm.requestThreadList.remove(requestThread)
 
-	def _getPQvalue(self):
+		# if _DEBUG:
+		# 	print(f'{self._log} request over')
+
+	def _getPQvalue(self, frameNumber):
 		pqValue = 0
 		if len(self.pqList) != 0:
-			if self.rtm.pqLock.acquire(block=False):
+			if self.rtm.pqLock.acquire():
 				try:
-					if len(self.pqList) != 0:
-						currentGMSD = self.pqList[0]
-						self.pqList.remove(currentGMSD)
-
-						pqValue = currentGMSD
+					for fn, gmsd in self.pqList:
+						if fn == frameNumber:
+							pqValue = gmsd
+							self.pqList.remove((fn, gmsd))
 				finally:
 					self.rtm.pqLock.release()
 					pass
 
 		return pqValue
 
+	# downloadRate
 	def _getThroughput(self, data):
-		request_length = data['request_length']
 		response_length = data['response_length']
 		requestInterval = data['requestInterval']
 
-		total_length = (request_length + response_length) / 1000 # make Byte to KB
+		print(f'reponse_length {response_length}, requestInterval: {requestInterval / 1000}')
 
-		return  total_length / requestInterval
+		total_length = (response_length) / 1000 # make Byte to KB
+		throughput = total_length / (requestInterval / 1000) # to make msec to sec
+
+		return f'{throughput:.3f}'
+
+	def _getFrameRate(self, data):
+		framerate = 0
+		if type(data['framerate']) == int:
+			framerate = data['framerate']
+
+		else:
+			framerate = data['framerate'].split('/')
+			if len(framerate) == 1:
+				framerate = data['framerate']
+			else:
+				framerate = float(framerate[0]) / float(framerate[1])
+
+		return framerate
 
 	def _checkRequestURL(self, data):
-		self.requestURLList.append(data['request_url'])
-		initCacheThread = Thread(target=self.ch.initCacheData, args=(data['request_url']),)
+		url = data['request_url']
+		print(f'{self._log} request_url: {url}')
+		self.requestURLList.append(url)
+		initCacheThread = Thread(target=self.ch.initCacheData, args=(url,),)
+		initCacheThread.daemon = True
 		initCacheThread.start()
 
-		if url.split('.')[-1] in 'mp4':
+		if 'mp4' in url:
 			currentInit = {}
 			currentInit['url'] = data['request_url']
 			currentInit['quality'] = data['request_url_quality']
 			self.currentInit = currentInit
 			self.initList.append(currentInit)
 
-		elif url.split('.')[-1] in 'm4s':
+			if _DEBUG:
+				print(f'{self._log} init url comm: {currentInit["url"]}')
+
+		elif 'm4s' in url:
 			currentChunk = {}
 			currentChunk['url'] = data['request_url']
 			currentChunk['quality'] = data['request_url_quality']
 			self.currentChunk = currentChunk
 			self.chunkList.append(currentChunk)
 
+			if _DEBUG:
+				print(f'{self._log} chunk url comm: {currentChunk["url"]}')
+
+		# print(f'{self._log} initList: {self.initList}')
+		# print(f'{self._log} chunkList: {self.chunkList}')
+
 		return initCacheThread
 
 	def _saveClientData(self, data, serverInitTime):
-		self._currentQuality = data['currentQuality']
-		initCacheThread = self._checkRequestURL(data)
-		
-		# handle only client close
-		if self._receivePlayerClose(data):
-			return
-
 		# handle only screen resolution
 		if self._saveScreenResolution(data):
 			return
 
+		# handle only client close
+		if self._receivePlayerClose(data):
+			return
+
+		self._currentQuality = data['currentQuality']
+		# print(f'{self._log} currentQuality: {self._currentQuality}')
+
+		initCacheThread = self._checkRequestURL(data)
+
 		# handle only image data
-		if self.requestURLList[-1] in 'mp4':
+		initCacheThread.join()
+		if 'mp4' in data['request_url']:
 			pass
 		else:
 			self._saveImageData(data)
@@ -304,17 +363,17 @@ class ClientData:
 
 		metric['bitrate'] = data['bitrate']
 
-		metric['GMSD'] = self._getPQvalue()
+		# save perceptual quality (with GMSD)
+		frameNumber = data['captured']["frameNumber"]
+		metric['GMSD'] = self._getPQvalue(frameNumber)
+
+		# save throughput (download rate)
 		metric['throughput'] = self._getThroughput(data)
 
 		# save framerate
-		framerate = data['framerate'].split('/')
-		if len(framerate) == 1:
-			metric['framerate'] = data['framerate']
-		else:
-			metric['framerate'] = float(framerate[0]) / float(framerate[1])
+		metric['framerate'] = self._getFrameRate(data)
 
-
+		# save stalling
 		metric['stalling'] = self._isStalling(data)
 
 		if len(self.metrics) == 0:
@@ -336,8 +395,8 @@ class ClientData:
 		self.rtm.metricLock.acquire()
 		try:
 			self.metrics.append(metric)
-			if _DEBUG:
-				print(f'{self._log} the client {self.ip} metric is saved: {metric}')
+			# if _DEBUG:
+			print(f'{self._log} the client {self.ip} metric is saved: {metric}')
 		except:
 			print(f'{self._log} the client {self.ip} metric is not saved')
 		finally:

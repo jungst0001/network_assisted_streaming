@@ -1,4 +1,4 @@
-from playerData import Player
+from clientData import ClientData
 from cluster import ClusterAttribute, Cluster
 import csv, time
 import traceback
@@ -14,7 +14,7 @@ _DEBUG = True
 
 class ControlServerHandler:
 	def __init__(self, sendRLData=True, getRLResult=False, onlyMonitorQoE=False):
-		self._log = '[PlayerHandler]'
+		self._log = '[ControlServerHandler]'
 
 		self._serverData = None
 		self._serverInitTime = datetime.now()
@@ -38,6 +38,7 @@ class ControlServerHandler:
 		# handler check tick management
 		self._checkInterval = 1
 		self._checkPlayerTimer = Timer(self._checkInterval, self._checkPlayers)
+		self._checkPlayerTimer.daemon = True
 		self._checkPlayerTimer.start()
 
 		# RL data
@@ -54,9 +55,6 @@ class ControlServerHandler:
 		print(f'{self._log} call __del__\n')
 		self._checkPlayerTimer.cancel()
 	
-		for p in self._currPlayers:
-			p.getTimer().cancel()
-
 	def getServerInitTime(self):
 		return self._serverInitTime
 
@@ -71,17 +69,21 @@ class ControlServerHandler:
 			if p.getAttribute == None:
 				if p.getScreenResolution()['height'] != 0:
 					p.setAttribute(ClusterAttribute(p.getScreenResolution()['height']))
+
+					if _DEBUG:
+						print(f'{self._log} client set attribute and clustering: {p.ip}, {p.getAttribute()}')
+
 					self.setCluster(p)
 
 			if p.isDisconnected():
 				self._currPlayers.remove(p)
 				self._clusters[p.getAttribute()].getClusterPlayers().remove(p)
 				self._disconnPlayers.append(p)
-				p.getTimer().cancel()
 				print(f'{self._log} | player {p.ip} is disconnected')
 		
 		self._checkPlayerTimer.cancel()
 		self._checkPlayerTimer = Timer(self._checkInterval, self._checkPlayers)
+		self._checkPlayerTimer.daemon = True
 		self._checkPlayerTimer.start()
 
 	def getPlayers(self):
@@ -89,6 +91,7 @@ class ControlServerHandler:
 
 	def getPlayer(self, ip: str, port=0):
 		result, player = self.isPlayer(ip)
+
 		if result is False:
 			for player in self._disconnPlayers:
 				if player.ip == ip:
@@ -96,35 +99,30 @@ class ControlServerHandler:
 					return None
 
 		if result is False:
-			player = Player(ip, port)
+			player = ClientData(ip, port)
 			self._currPlayers.append(player)
-			self._clusters[player.getAttribute()].getClusterPlayers().append(player)
+			# self._clusters[player.getAttribute()].getClusterPlayers().append(player)
 			print(f'{self._log} | new player {player.ip} is connected')
 			print(f'{self._log} | current players is {len(self._currPlayers)}')
 			
-			return player
-		else:
-			player.getTimer().reset()
-
-			return player
+		return player
 
 	def isPlayer(self, ip: str):
 		for player in self._currPlayers:
-			#print(f'{self._log} the player ip is {player.ip} and received ip is {ip}')
 			if player.ip == ip: 
 				return True, player
 		return False, None
 
-	def terminatePlayerThread(self):
+	def terminateClientThread(self):
 		for p in self._disconnPlayers:
-			for saveThread in p.threadList:
-				if saveThread.is_alive():
-					saveThread.join()
+			for requestThread in p.rtm.requestThreadList:
+				if requestThread.is_alive():
+					requestThread.join()
 
 		for p in self._currPlayers:
-			for saveThread in p.threadList:
-				if saveThread.is_alive():
-					saveThread.join()
+			for requestThread in p.rtm.requestThreadList:
+				if requestThread.is_alive():
+					requestThread.join()
 
 	def savePlayersData(self):
 		self._serverData.cancelServerTimer()
@@ -231,10 +229,10 @@ class ControlServerHandler:
 				f.write(f'initTime,{p.getPlayerInitTime()}\n')
 				f.write(f'endTime,{p.getPlayerEndTime()}\n')
 				f.write(f'liveTime(sec),{p.getPlayerLiveTime().total_seconds()}\n')
-				f.write(f'startupDelay,{p.getStartupDelay()}\n')
+				# f.write(f'startupDelay,{p.getStartupDelay()}\n')
 				f.write(f'Total stalling Event,{p.getStallingEvent()}\n')
-				f.write(f'player width,{p.getPlayerResolution()["width"]}\n')
-				f.write(f'player height,{p.getPlayerResolution()["height"]}\n')
+				f.write(f'client width,{p.getPlayerResolution()["width"]}\n')
+				f.write(f'client height,{p.getPlayerResolution()["height"]}\n')
 
 				f.write(f'time,')
 				for i in range(len(metrics)-1):
@@ -257,10 +255,10 @@ class ControlServerHandler:
 					f.write(f'{metrics[i]["framerate"]},')
 				f.write(f'{metrics[-1]["framerate"]}\n')
 				
-				f.write(f'bufferLevel,')
-				for i in range(len(metrics)-1):
-					f.write(f'{metrics[i]["bufferLevel"]},')
-				f.write(f'{metrics[-1]["bufferLevel"]}\n')
+				# f.write(f'bufferLevel,')
+				# for i in range(len(metrics)-1):
+				# 	f.write(f'{metrics[i]["bufferLevel"]},')
+				# f.write(f'{metrics[-1]["bufferLevel"]}\n')
 				
 				f.write(f'GMSD,')
 				for i in range(len(metrics)-1):
@@ -296,14 +294,14 @@ class ControlServerHandler:
 					f.write(f'{metrics[i]["stalling"]},')
 				f.write(f'{metrics[-1]["stalling"]}\n')
 			
-				f.write(f'stallingTime (sec),')
+				f.write(f'totalStallingEvent,')
 				for i in range(len(metrics)-1):
-					f.write(f'{metrics[i]["stallingTime"]},')
-				f.write(f'{metrics[-1]["stallingTime"]}\n')
+					f.write(f'{metrics[i]["totalStallingEvent"]},')
+				f.write(f'{metrics[-1]["totalStallingEvent"]}\n')
 				# print(f'stalling Time type: {type(metrics[-1]["stallingTime"])}')
-				total_stalling += int(metrics[-1]["stallingTime"])
+				total_stalling += int(metrics[-1]["totalStallingEvent"])
 
-				f.write(f'Throughput (Kbps),')
+				f.write(f'Throughput (KB/s),')
 				for i in range(len(metrics)-1):
 					f.write(f'{metrics[i]["throughput"]},')
 				f.write(f'{metrics[-1]["throughput"]}\n')

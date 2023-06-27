@@ -1,4 +1,4 @@
-from playerData import Player
+from clientData import ClientData
 # from playerHandler import PlayerHandler
 import requests
 import json

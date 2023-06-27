@@ -14,12 +14,14 @@ BPS_1600 = cserverConfig.BPS_1600
 
 vidcap = cv2.VideoCapture()
 
-def getFrame(vidcap, sec=0, count=0, name='video'):
+def getFrame(vidcap, frame_number, count=0,  name='video'):
 #   vidcap.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
     vidcap.set(cv2.CAP_PROP_POS_FRAMES, count)
     hasFrames, image = vidcap.read()
+    # image_name = name + '_' + str(count) + '.jpeg' # .png to .jpeg
+    image_name = f'{name}_{frame_number}.jpeg' # .png to .jpeg
     if hasFrames:
-        image_name = name + '_' + str(count) + '.jpeg' # .png to .jpeg
+        # print(f'[calculateGMSD] vidcap has frame')
         # [cv2.IMWRITE_JPEG_QUALITY, 95] (default is 95, high quality:100)
         cv2.imwrite("images/server_images/" + image_name, image, [cv2.IMWRITE_JPEG_QUALITY, 50])
 
@@ -42,9 +44,20 @@ def getOriAndCompImage(client_image_name, frame_number):
 
     return ori_img, dist_img
 
-def getClientGMSD(client_image_name, frame_number, chunkMP4, currentQuality):
+def _recal_frame_number(frame_number, frame_rate, chunk_unit=2):
+    remain = frame_number % (frame_rate * chunk_unit)
+
+    if remain == 0:
+        remain = frame_rate * chunk_unit
+
+    return remain
+
+def getClientGMSD(client_image_name, frame_number, frame_rate, chunkMP4, currentQuality):
     chunkVidCp = cv2.VideoCapture(chunkMP4)
-    _, server_image_name = getFrame(chunkVidCp, 0, frame_number, currentQuality)
+
+    recal_frame_number = _recal_frame_number(frame_number, frame_rate)
+
+    _, server_image_name = getFrame(chunkVidCp, frame_number, recal_frame_number, currentQuality)
 
     ori_img = cv2.imread('images/server_images/' + server_image_name, cv2.IMREAD_COLOR)
     dist_img = cv2.imread('images/' + client_image_name, cv2.IMREAD_COLOR)
@@ -58,8 +71,11 @@ def calculateGMSD(image_original, image_compare):
     ori_img = image_original
     dist_img = image_compare
 
-    (H, W, d) = ori_img.shape
-    dist_img = cv2.resize(dist_img, (W, H))
+    # (H, W, d) = ori_img.shape
+    # dist_img = cv2.resize(dist_img, (W, H))
+
+    (H, W, d) = dist_img.shape
+    ori_img = cv2.resize(ori_img, (W, H))
      
     ori_img = cv2.cvtColor(ori_img, cv2.COLOR_BGR2GRAY)
     dist_img = cv2.cvtColor(dist_img, cv2.COLOR_BGR2GRAY)
