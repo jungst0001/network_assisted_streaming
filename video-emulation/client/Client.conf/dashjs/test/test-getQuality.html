@@ -65,7 +65,6 @@
 
             player.on(dashjs.MediaPlayer.events["PLAYBACK_NOT_ALLOWED"], function (){
                 video.muted = true;
-                // player.initialized(video, url, true);
             });
 
             player.on(dashjs.MediaPlayer.events["BUFFER_EMPTY"], function () {
@@ -75,7 +74,6 @@
 
             player.on(dashjs.MediaPlayer.events["STREAM_INITIALIZED"], function () {
                 player.setQualityFor('video', initQuality);
-                // console.log(player.getQualityFor('video'));
 
                 let video_width = getVideoWidth(video);
                 let video_height = getVideoHeight(video);
@@ -87,7 +85,25 @@
                     }
                 });
 
-                httpPOST(jsonResolutionData, "http://127.0.0.1:8888");
+                httpPOST(jsonResolutionData, cserver_url);
+            });
+
+            window.addEventListener("beforeunload", function (e){
+                var jsonData = JSON.stringify({
+                    "client_ip" : client_ip,
+                    "status": "closed"
+                });
+
+                httpPOST(jsonData, cserver_url);
+            });
+
+            player.on(dashjs.MediaPlayer.events["PLAYBACK_ENDED"], function () {
+                var jsonData = JSON.stringify({
+                    "client_ip" : client_ip,
+                    "status": "closed"
+                });
+
+                httpPOST(jsonData, cserver_url);
             });
 
             var eventPoller = setInterval(function () {
@@ -130,15 +146,6 @@
                     chunk_skip_event = 1;
                 }
             }, 1000);
-
-            // var hearbeat =  setInterval(function () {
-            //     var jsonData = JSON.stringify({
-            //         "heartbeat":"hearbeat"
-            //     });
-
-            //     httpPOST(jsonData)
-            // }, 500);
-
 
             if (video.webkitVideoDecodedByteCount !== undefined) {
                 var lastDecodedByteCount = 0;

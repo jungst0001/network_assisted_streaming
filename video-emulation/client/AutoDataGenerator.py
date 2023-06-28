@@ -31,57 +31,30 @@ class AutoDataGeneratorOptions:
 		##############################################
 			# Player Generator Options #
 		self.NUM_Of_PLAYER = 0
-		self.REMOTE_NUM_OF_PLAYER = 50
+		self.REMOTE_NUM_OF_PLAYER = 25
 		self.NUM_OF_TOTAL_PLAYER = self.NUM_Of_PLAYER + self.REMOTE_NUM_OF_PLAYER
 
-		self.VIDEO_RUNNING_TIME = 80 # unit is second
+		self.VIDEO_RUNNING_TIME = 50 # unit is second
 		self.PLAYER_CATEGORY = "firefox" # or "firefox" "google-chrome-stable"
 
-		self.MSERVER_URL = "http://192.168.122.2:8088" # static URL
-		self.CSERVER_URL = "http://192.168.122.3:8888" # static URL
+		self.MSERVER_URL = "http://143.248.57.162" # static URL
+		self.CSERVER_URL = "http://143.248.57.162:8888" # static URL
 		self.RSERVER_URL = "http://192.168.122.1:8889"
-		self.BUFFER_TIME = 30 # unit is second
-		self.IS_ABR = "true" # "true" or "false", false means use rl quality
-		self.QUALITY_QUERY_INTERVAL = 5000 # unit is milisecond
-		self.SEND_MONITORING_INTERVAL = 5000 # unit is milisecond
-		self.SNAPSHOT_INTERVAL = 10000 # unit is milisecond
+		self.BUFFER_TIME = 4 # unit is second
+		self.IS_ABR = "false" # "true" or "false", false means use rl quality
+		self.QUALITY_QUERY_INTERVAL = 2000 # unit is milisecond
 		self.ABR_STRATEGY = "Dynamic" # or "Dynamic" | "BOLA" | "L2A" | "LoLP" | "Throughput"
+		self.WIDTH = None
+		self.HEIGHT = None
 
 		###############################################
 				# VM OPTION #
-		self.LOCAL_MAX_PLAYER_PER_CLIENT = 1
-		self.REMOTE_MAX_PLAYER_PER_CLIENT = 2
+		self.LOCAL_MAX_PLAYER_PER_CLIENT = 30
+		self.REMOTE_MAX_PLAYER_PER_CLIENT = 30
 		###############################################
 				# Auto OPTION #
-		self.INCOMMING_TIME = 30
-		self.OUTCOMMING_TIME = 30
-
-# def reboot_client(client_ip=None):
-# 	# if client_name is None:
-# 	# 	for cn in CLIENT_NAME:
-# 	# 		print(log_string(f'Reboot client: {cn}'))
-# 	# 		subprocess.run(['virsh', 'reboot', cn])
-# 	# 		time.sleep(8)
-
-# 	# 	print(log_string('All clients are reset'))
-# 	# else:
-# 	# 	cn = client_name
-# 	# 	print(log_string(f'The client {cn} is reset'))
-# 	# 	subprocess.run(['virsh', 'reset', cn])
-# 	# 	print(log_string(f'The client {cn} is reset completed'))
-
-# 	if client_ip is None:
-# 		for ip in IP_LIST:
-# 			print(log_string(f'Reboot client: {ip}'))
-# 			client_restartPlayer.restartPlayerWithSSH(ip)
-# 			time.sleep(8)
-
-# 		print(log_string('All clients are reset'))
-# 	else:
-# 		ip = client_ip
-# 		print(log_string(f'The client {ip} is reset'))
-# 		client_restartPlayer.restartPlayerWithSSH(ip)
-# 		print(log_string(f'The client {ip} is reset completed'))
+		self.INCOMMING_TIME = 5
+		self.OUTCOMMING_TIME = 5
 
 def log_string(str):
 	log = '\033[95m' + str + '\033[0m'
@@ -122,20 +95,14 @@ def checkClientRuntime(poison_dist, comingTime, clientNum):
 	return time_slot
 
 def run_server(isRunning, isTerminated):
-#	ssh = paramiko.SSHClient()
-#	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-#	ssh.connect("192.168.0.2", username="wins", password="winslab")
-#	stdin, stdout, stderr = ssh.exec_command("python3 server/server.py", get_pty=True)
-#	lines = stdout.readlines()
-#	print(lines)
-
-	tp = paramiko.Transport(("192.168.122.3", 22)) # CSERVER IP
-	tp.connect(username='wins', password='winslab')
+	tp = paramiko.Transport(("127.0.0.1", 22)) # CSERVER IP
+	tp.connect(username='wins', password='wins2-champion')
 
 	channel = tp.open_session()
 	channel.get_pty()
 	channel.set_combine_stderr(1)
-	channel.exec_command("cd cserver && python3 server_flask.py")
+	channel.exec_command("cd jin/video_emulation/control_server && python3 server_flask.py")
+
 	while isRunning[0]:
 		if channel.exit_status_ready():
 			if channel.recv_ready():
@@ -143,7 +110,7 @@ def run_server(isRunning, isTerminated):
 		output = channel.recv(1024).decode(sys.stdout.encoding)
 		sys.stdout.write(output)
 
-		if "[PlayerHandler] call __del__" in output:
+		if "Shutting down" in output:
 			isRunning[0] = False
 
 	print(log_string("Channel closing"))
@@ -154,7 +121,7 @@ def run_server(isRunning, isTerminated):
 def close_server():
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-	ssh.connect("192.168.122.3", username="wins", password="winslab")
+	ssh.connect("127.0.0.1", username="wins", password="wins2-champion")
 
 	stdin, stdout, stderr = ssh.exec_command("ps -ax | grep server_flask.py ")
 	lines = stdout.readlines()
@@ -172,8 +139,10 @@ def close_server():
 	# 	print(log_string(line))
 	##
 
-	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/cserver/images/*.png ")
-	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/cserver/images/server_images/*.png ")
+	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/*.png ")
+	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/server_images/*.png ")
+
+	ssh.close()
 
 	print(log_string("Server closed"))
 
@@ -408,49 +377,14 @@ if __name__ == "__main__":
 
 	try:
 		update = True
-		options.BUFFER_TIME = 15
+		options.BUFFER_TIME = 4
 		if update:
 			remoteHostHandler.setOptions(options)
 			remoteHostHandler.writeRemotePlayerScript()
-		collectDataset(episode_num=20, remoteHostHandler=remoteHostHandler, 
+		collectDataset(episode_num=1, remoteHostHandler=remoteHostHandler, 
 			options=options, update=update)
 		remoteHostHandler.resetRemotePlayerFile()
 
-		update = True
-		options.BUFFER_TIME = 30
-		if update:
-			remoteHostHandler.setOptions(options)
-			remoteHostHandler.writeRemotePlayerScript()
-		collectDataset(episode_num=20, remoteHostHandler=remoteHostHandler, 
-			options=options, update=update)
-		remoteHostHandler.resetRemotePlayerFile()
-
-		update = True
-		options.BUFFER_TIME = 45
-		if update:
-			remoteHostHandler.setOptions(options)
-			remoteHostHandler.writeRemotePlayerScript()
-		collectDataset(episode_num=20, remoteHostHandler=remoteHostHandler, 
-			options=options, update=update)
-		remoteHostHandler.resetRemotePlayerFile()
-
-		update = True
-		options.BUFFER_TIME = 60
-		if update:
-			remoteHostHandler.setOptions(options)
-			remoteHostHandler.writeRemotePlayerScript()
-		collectDataset(episode_num=20, remoteHostHandler=remoteHostHandler, 
-			options=options, update=update)
-		remoteHostHandler.resetRemotePlayerFile()
-
-		# # For getting test dataset
-		# main(episode_num=1, Abr=False, bufferLevel=10, withoutImg=False)
-		# main(episode_num=1, Abr=False, bufferLevel=15, withoutImg=False)
-		# main(episode_num=1, Abr=False, bufferLevel=30, withoutImg=False)
-		# main(episode_num=1, Abr=False, bufferLevel=60, withoutImg=False)
-		# main(episode_num=1, Abr=False, bufferLevel=90, withoutImg=False)
-
-		# main(episode_num=1, Abr=False, bufferLevel=15, withoutImg=True)
 	except KeyboardInterrupt:
 		terminatePlayers(options, remoteHostHandler)
 

@@ -58,23 +58,19 @@ def makeRunningFile(f, dashPath, filename, player_category="firefox"):
 def main():
 	# Options parameter	
 	dirPath = "/home/wins/jin/video_emulation/client/" 
-	dashPath = dirPath + "Client.conf/dashjs/emulator/"
-	filename = "test_abr_30"
+	dashPath = dirPath + "Client.conf/dashjs/test/"
+	filename = "test_live_streaming"
 
 	scriptOption = player_blueprint.ScriptOption()
-	scriptOption.mserver_url="http://192.168.122.2:8088" 
-	scriptOption.cserver_url="http://192.168.122.3:8888"
-	scriptOption.buffer_time=30
+	scriptOption.mserver_url="http://127.0.0.1" 
+	scriptOption.cserver_url="http://127.0.0.1:8888"
+	scriptOption.buffer_time=4
 	scriptOption.isAbr="true" 
 	scriptOption.received_quality_interval=1500 
-	scriptOption.send_monitoring_interval=2500
-	scriptOption.snapshot_interval=5000
 	scriptOption.strategy = "Dynamic"
 	scriptOption.ip = "10.0.0.1"
-	# strategy = "BOLA"
-	# strategy = "L2A"
-	# strategy = "LoLP"
-	# strategy = "Throughput"
+	scriptOption.width = 854
+	scriptOption.height = 480
 
 	print(f'file path: {dashPath}')
 	print(f'file name: {filename}')

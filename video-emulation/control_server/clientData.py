@@ -204,8 +204,8 @@ class ClientData:
 	def isDisconnected(self):
 		return self._isDisconnected
 
-	def _receivePlayerClose(self, data):
-		# if player is closed, this message is received
+	def _receiveClientClose(self, data):
+		# if client is closed, this message is received
 		try:
 			status = data["status"]
 			print(f'{self._log} {self.ip} client status: {status}')
@@ -348,7 +348,7 @@ class ClientData:
 			return
 
 		# handle only client close
-		if self._receivePlayerClose(data):
+		if self._receiveClientClose(data):
 			return
 
 		self._currentQuality = data['currentQuality']

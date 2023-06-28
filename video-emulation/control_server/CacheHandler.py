@@ -33,7 +33,7 @@ class CacheHandler:
 	def initCacheData(self, url):
 		cacheName = self.getMD5Hash(url)
 
-		cacheNameWithDir = f'../../cache/{cacheName[-1]}/{cacheName[-3:-1]}/{cacheName}'
+		cacheNameWithDir = f'/home/wins/jin/cache/{cacheName[-1]}/{cacheName[-3:-1]}/{cacheName}'
 		self._saveCacheToLocal(cacheNameWithDir, url)
 		self._preprocessCacheFile(cacheName)
 

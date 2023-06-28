@@ -1,5 +1,12 @@
 
 player_ratio = None
+resolution_ratio = None
+
+RESOLUTION = [
+	(1980, 1080),
+	(1280, 720),
+	(854, 480)
+]
 
 class RemoteHostData:
 	def __init__(self):
@@ -66,6 +73,8 @@ class RemoteHostData:
 		self.assignedPlayerNum = None
 		self.runableClientNum = None
 
+		self.assignedResolutionList = []
+
 		self.shFileList = []
 		self.fnameList = []
 		self.htmlFileList = []
@@ -76,7 +85,9 @@ class RemoteHostData:
 def setRemoteHostData():
 	# edit player ratio if remoteHostData num is changed
 	global player_ratio
+	global resolution_ratio
 	player_ratio = (20, 20, 2, 4, 4) # (20, 20, 2, 4, 4) (0, 0, 1, 1, 1)
+	resolution_ratio = (5, 15 ,5) # mean (FHD, HD, SD)
 
 	rhdList = []
 

@@ -29,7 +29,8 @@ class RemoteHostHandler:
 		self.rhdList = remoteHostClientConfig.setRemoteHostData()
 
 		# num of total applied ratio is len(rhdList)
-		self.player_ratio = remoteHostClientConfig.player_ratio  
+		self.player_ratio = remoteHostClientConfig.player_ratio
+		self.resolution_ratio = remoteHostClientConfig.resolution_ratio 
 
 		for rhd in self.rhdList:
 			rhd.sshManager = fileUpload.SSHManager()
@@ -89,17 +90,35 @@ class RemoteHostHandler:
 			else:
 				self.rhdList[i].runableClientNum = pns[i] // self.options.REMOTE_MAX_PLAYER_PER_CLIENT + 1
 
-	def _makePlayer(self, remoteHostData, filename="test", ip="10.0.0.1"):
+	def getScreenResolutionListForRatio(self):
+		srl = []
+		resolution_info = []
+
+		for i in range(len(self.resolution_ratio)):
+			srl.append(self.options.REMOTE_NUM_OF_PLAYER * self.resolution_ratio[i] // sum(self.resolution_ratio))
+
+		if self.options.REMOTE_NUM_OF_PLAYER != sum(srl):
+			srl[-1] = srl[-1] + (self.options.REMOTE_NUM_OF_PLAYER) - sum(srl)
+
+		for i in range(len(srl)):
+			for j in range(srl[i]):
+				resolution_info.append(remoteHostClientConfig.RESOLUTION[i])
+
+		print(f'remote screen_ratio: {srl}')
+
+		return resolution_info
+
+	def _makePlayer(self, remoteHostData, filename="test", ip="10.0.0.1", resolution=(854, 480)):
 		scriptOption = player_blueprint.ScriptOption()
 		scriptOption.mserver_url = remoteHostData.mserverURL
 		scriptOption.cserver_url = remoteHostData.cserverURL
 		scriptOption.buffer_time = self.options.BUFFER_TIME
 		scriptOption.isAbr = self.options.IS_ABR
 		scriptOption.received_quality_interval = self.options.QUALITY_QUERY_INTERVAL 
-		scriptOption.send_monitoring_interval = self.options.SEND_MONITORING_INTERVAL
-		scriptOption.snapshot_interval = self.options.SNAPSHOT_INTERVAL
 		scriptOption.strategy = self.options.ABR_STRATEGY
 		scriptOption.ip = ip
+		scriptOption.width = resolution[0]
+		scriptOption.height = resolution[1]
 
 		sh_filename, html_filename = player_script_maker.writePlayer(scriptOption, filename)
 
@@ -135,6 +154,7 @@ class RemoteHostHandler:
 		print(f'remote buffer time: {self.options.BUFFER_TIME}')
 
 		self._getPlayerNumforRatio() # assign player num with player ratio
+		resolution_info = self._getScreenResolutionListForRatio()
 
 		for rhd in self.rhdList:
 			for i in range(currentPlayerNum, currentPlayerNum + rhd.assignedPlayerNum): 
@@ -142,7 +162,7 @@ class RemoteHostHandler:
 				filename = "Bf" + str(self.options.BUFFER_TIME) + "-Abr-" + str(i)
 				rhd.fnameList.append(filename)
 				ip = player_generator.createVirtualIP(i)
-				sh_filename, html_filename = self._makePlayer(rhd, filename, ip)
+				sh_filename, html_filename = self._makePlayer(rhd, filename, ip, resolution_info[i])
 
 				rhd.htmlFileList.append(html_filename)
 				rhd.shFileList.append(sh_filename)
@@ -223,12 +243,14 @@ class RemoteHostHandler:
 
 def main():
 	options = AutoDataGeneratorOptions()
-	rh = rh.RemoteHostHandler()
+	rh = RemoteHostHandler()
 	rh.setOptions(options)
+
+	print(rh.getScreenResolutionListForRatio())
 	
-	rh.updateRemoteJSFile()
-	rh.updateRemoteSHFile()
-	rh.updateRemoteHTMLFile()
+	# rh.updateRemoteJSFile()
+	# rh.updateRemoteSHFile()
+	# rh.updateRemoteHTMLFile()
 
 if __name__ == '__main__':
 	main()

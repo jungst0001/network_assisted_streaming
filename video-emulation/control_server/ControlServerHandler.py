@@ -37,7 +37,7 @@ class ControlServerHandler:
 
 		# handler check tick management
 		self._checkInterval = 1
-		self._checkPlayerTimer = Timer(self._checkInterval, self._checkPlayers)
+		self._checkPlayerTimer = Timer(self._checkInterval, self._checkClients)
 		self._checkPlayerTimer.daemon = True
 		self._checkPlayerTimer.start()
 
@@ -59,14 +59,15 @@ class ControlServerHandler:
 		return self._serverInitTime
 
 	def setCluster(self, client):
-		self._clusters[client.getAttribute()].getClusterPlayers().append(client)
+		self._clusters[client.getAttribute().name].getCurrentClients().append(client)
 
 	def setServerData(self, serverData):
 		self._serverData = serverData
 
-	def _checkPlayers(self):
+	def _checkClients(self):
+		# print(f'{self._log} check client')
 		for p in self._currPlayers:
-			if p.getAttribute == None:
+			if p.getAttribute() == None:
 				if p.getScreenResolution()['height'] != 0:
 					p.setAttribute(ClusterAttribute(p.getScreenResolution()['height']))
 
@@ -77,12 +78,13 @@ class ControlServerHandler:
 
 			if p.isDisconnected():
 				self._currPlayers.remove(p)
-				self._clusters[p.getAttribute()].getClusterPlayers().remove(p)
+				self._clusters[p.getAttribute().name].getCurrentClients().remove(p)
+				self._clusters[p.getAttribute().name].getDisconnClients().append(p)
 				self._disconnPlayers.append(p)
 				print(f'{self._log} | player {p.ip} is disconnected')
 		
 		self._checkPlayerTimer.cancel()
-		self._checkPlayerTimer = Timer(self._checkInterval, self._checkPlayers)
+		self._checkPlayerTimer = Timer(self._checkInterval, self._checkClients)
 		self._checkPlayerTimer.daemon = True
 		self._checkPlayerTimer.start()
 

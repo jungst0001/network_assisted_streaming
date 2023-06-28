@@ -1,6 +1,12 @@
 client_user = 'wins'
 client_password = 'winslab'
 
+RESOLUTION = [
+	(1980, 1080),
+	(1280, 720),
+	(854, 480)
+]
+
 clientIPList = [ 
 	"192.168.122.11",
 	"192.168.122.12",
@@ -29,7 +35,7 @@ clientHostName = [
 
 LOCAL_DIR = '/home/wins/jin/video_emulation/client/'
 LOCAL_RUN_DIR = LOCAL_DIR + 'Client.conf/'
-LOCAL_DASH_DIR = LOCAL_DIR + 'Client.conf/dashjs/emulator/'
+LOCAL_DASH_DIR = LOCAL_DIR + 'Client.conf/dashjs/test/'
 LOCAL_JS_DIR = LOCAL_DASH_DIR + 'client/'
 
 REMOTE_DIR = '/home/wins/'

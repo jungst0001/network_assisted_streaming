@@ -190,14 +190,11 @@ def do_GET():
 def do_GET_livetime():
 	client_ip = request.environ['REMOTE_ADDR']
 	height = request.args
-	
-
-	print(f'{height}')
 
 	server, requestURI = playerHandler.getLiveStreamingInfo()
 	if client_ip == '127.0.0.1':
 		# For testing
-		print(f'{_LOG} Request URI: {requestURI}')
+		# print(f'{_LOG} Request URI: {requestURI}')
 		server = 'http://127.0.0.1/'
 
 	livetime = math.floor((datetime.now() - playerHandler.getServerInitTime()).total_seconds())
