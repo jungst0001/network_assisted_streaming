@@ -85,7 +85,10 @@ class ClientData:
 	def _getInitWithChunkURL(self, frameNumber, framerate, currentQuality, chunkUnit=2):
 		current_playhead = frameNumber / framerate
 		chunkNumber = math.ceil(current_playhead / chunkUnit)
-		print(f'{self._log} playhead: {current_playhead:.2f}, chunkNumber: {chunkNumber}')
+
+		if _DEBUG:
+			print(f'{self._log} playhead: {current_playhead:.2f}, chunkNumber: {chunkNumber}')
+			
 		chunkKey = f'2s{chunkNumber}.m4s'
 
 		initURL = None
@@ -114,13 +117,15 @@ class ClientData:
 		initURL, chunkURL = self._getInitWithChunkURL(frameNumber, framerate, currentQuality)
 
 		if (initURL is None) or (chunkURL is None):
-			print(f'{self._log} {self.ip} init url or chunk url is None')
+			if _DEBUG:
+				print(f'{self._log} {self.ip} init url or chunk url is None')
 			self.chunkInCache[frameNumber] = None
 			return
 
 		chunkMP4 = self.ch.getChunkMP4(initURL, chunkURL)
 		if chunkMP4 is None:
-			print(f'{self._log} {self.ip} chunk mp4 with {initURL}, {chunkURL} is None')
+			if _DEBUG:
+				print(f'{self._log} {self.ip} chunk mp4 with {initURL}, {chunkURL} is None')
 
 		self.chunkInCache[frameNumber] = chunkMP4
 
@@ -174,7 +179,8 @@ class ClientData:
 					else:
 						currentGMSD = getClientGMSD(head_imageInfo[0], head_imageInfo[1], framerate, chunkMP4, self._currentQuality)
 
-					print(f'{self._log} the client {self.ip} gmsd with frame number: {frameNumber} is calculated: {currentGMSD}')
+					if _DEBUG:
+						print(f'{self._log} the client {self.ip} gmsd with frame number: {frameNumber} is calculated: {currentGMSD}')
 
 					self.pqList.append((frameNumber, currentGMSD))
 				except:
@@ -208,7 +214,8 @@ class ClientData:
 		# if client is closed, this message is received
 		try:
 			status = data["status"]
-			print(f'{self._log} {self.ip} client status: {status}')
+			if _DEBUG:
+				print(f'{self._log} {self.ip} client status: {status}')
 
 			self._isDisconnected = True
 
@@ -288,7 +295,8 @@ class ClientData:
 		response_length = data['response_length']
 		requestInterval = data['requestInterval']
 
-		print(f'reponse_length {response_length}, requestInterval: {requestInterval / 1000}')
+		if _DEBUG:
+			print(f'reponse_length {response_length}, requestInterval: {requestInterval / 1000}')
 
 		total_length = (response_length) / 1000 # make Byte to KB
 		throughput = total_length / (requestInterval / 1000) # to make msec to sec
@@ -311,7 +319,8 @@ class ClientData:
 
 	def _checkRequestURL(self, data):
 		url = data['request_url']
-		print(f'{self._log} request_url: {url}')
+		if _DEBUG:
+			print(f'{self._log} request_url: {url}')
 		self.requestURLList.append(url)
 		initCacheThread = Thread(target=self.ch.initCacheData, args=(url,),)
 		initCacheThread.daemon = True
@@ -412,8 +421,8 @@ class ClientData:
 		self.rtm.metricLock.acquire()
 		try:
 			self.metrics.append(metric)
-			# if _DEBUG:
-			print(f'{self._log} the client {self.ip} metric is saved: {metric}')
+			if _DEBUG:
+				print(f'{self._log} the client {self.ip} metric is saved: {metric}')
 		except:
 			print(f'{self._log} the client {self.ip} metric is not saved')
 		finally:
