@@ -9,6 +9,7 @@ from calculateSSIM import getClientSSIM
 from calculateGMSD import getClientGMSD
 from CacheHandler import CacheHandler
 import traceback
+import cserverConfig
 
 _DEBUG = False
 
@@ -19,13 +20,36 @@ class RequestThreadManager:
 		self.imageLock = Lock()
 		self.pqLock = Lock() # perceptual quality
 
-	def joinThread(self):
+	def joinRequestThread(self):
 		for rThread in self.requestThreadList:
 			if rThread.is_alive():
 				rThread.join()
 				self.requestThreadList.remove(rThread)
 			else:
 				self.requestThreadList.remove(rThread)
+
+class ClientTimer:
+	def __init__(self, interval, function, ip=""):
+		self._log = '[ClientTimer]'
+	
+		self._playerIP = ip
+		self.interval = interval
+		self.function = function
+		self.timer = Timer(self.interval, self.function)
+		self.timer.daemon = True
+
+	def run(self):
+		self.timer.start()
+
+	def cancel(self):
+#		print(f'{self._log} ClientTimer {self._playerIP} is cancelled')
+		self.timer.cancel()
+
+	def reset(self):
+		self.timer.cancel()
+		self.timer = Timer(self.interval, self.function)
+		self.timer.daemon = True
+		self.timer.start()
 
 class ClientData:
 	def __init__(self, ip: str, port=0):
@@ -68,6 +92,33 @@ class ClientData:
 		self.imageList = []
 		self.pqList = []
 
+		# check Timer
+		self._interval = 100
+		self._timer = ClientTimer(self._interval, self._setTimer, self.ip)
+		self._timer.run()
+
+	def getTimer(self):
+		return self._timer
+
+	def _setTimer(self):
+		self._endTime = datetime.now()
+		self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
+		self._isDisconnected = True
+
+	def getClientEndTime(self):
+		return self._endTime
+
+	def getClientInitTime(self):
+		return self._initTime
+
+	def getClientLiveTime(self):
+		liveTime = self._endTime - self._initTime
+		return liveTime
+
+	def setClientEndTime(self, endTime):
+		self._endTime = endTime
+		self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
+
 	def getScreenResolution(self):
 		if self.screen_resolution is None:
 			self.screen_resolution = {}
@@ -86,15 +137,27 @@ class ClientData:
 		current_playhead = frameNumber / framerate
 		chunkNumber = math.ceil(current_playhead / chunkUnit)
 
+		if type(currentQuality) != int:
+			currentQuality = int(cu)
+
 		if _DEBUG:
 			print(f'{self._log} playhead: {current_playhead:.2f}, chunkNumber: {chunkNumber}')
-			
+
 		chunkKey = f'2s{chunkNumber}.m4s'
 
 		initURL = None
+		# print(self.initList)
 		for init in self.initList:
 			if init['quality'] == currentQuality:
 				initURL = init['url']
+				break
+
+		# if initURL is None:
+		# 	chunkURL = None
+		# else:
+		# 	chunkURL = initURL.split('2s_init.mp4')[0]
+		# 	chunkURL = f'{chunkURL}{chunkKey}'
+			# print(f'new chunk URL: {chunkURL}')
 
 		chunkURL = None
 		checkOneMoreChunkURL = True
@@ -104,6 +167,7 @@ class ClientData:
 				if chunkKey in chunk['url']:
 					if chunk['quality'] == currentQuality:
 						chunkURL = chunk['url']
+						break
 
 			if chunkURL is None:
 				time.sleep(0.5)
@@ -119,7 +183,7 @@ class ClientData:
 		if (initURL is None) or (chunkURL is None):
 			if _DEBUG:
 				print(f'{self._log} {self.ip} init url or chunk url is None')
-			self.chunkInCache[frameNumber] = None
+			self.chunkInCache[frameNumber] = (None, initURL, chunkURL)
 			return
 
 		chunkMP4 = self.ch.getChunkMP4(initURL, chunkURL)
@@ -127,7 +191,7 @@ class ClientData:
 			if _DEBUG:
 				print(f'{self._log} {self.ip} chunk mp4 with {initURL}, {chunkURL} is None')
 
-		self.chunkInCache[frameNumber] = chunkMP4
+		self.chunkInCache[frameNumber] = (chunkMP4, initURL, chunkURL)
 
 	def _saveImageData(self, data):
 		# save Image data and calculate SSIM / GMSD
@@ -154,11 +218,12 @@ class ClientData:
 			try:
 				_currentFrameNumber = frameNumber
 				_currentImageName = self.ip + "-" + str(bitrate) + "-" + str(frameNumber) + '.' + extension
+				_currentImageName = f'{self.ip}-{bitrate}-{frameNumber}.{extension}'
 
 				imageInfo = (_currentImageName, _currentFrameNumber)
 				self.imageList.append(imageInfo)
 				
-				f = open('images/' + self.ip + "-" + str(bitrate) + "-" + str(frameNumber) + '.' + extension, 'wb')
+				f = open(f'{cserverConfig.LOCAL_DIR}images/{_currentImageName}', 'wb')
 				f.write(base64.b64decode(image))
 				f.close()
 			finally:
@@ -172,9 +237,11 @@ class ClientData:
 					self.imageList.remove(head_imageInfo)
 					
 					cacheThread.join()
-					chunkMP4 = self.chunkInCache[frameNumber]
+					chunkMP4, initURL, chunkURL = self.chunkInCache[frameNumber]
 					if chunkMP4 is None:
-						print(f'{self._log} chunk with frame number {frameNumber} is not cached')
+						print(f'{self._log} {self.ip} chunk with frame number {frameNumber} is not cached')
+						# print(f'{self._log} -> initURL {initURL}')
+						# print(f'{self._log} -> chunkURL {chunkURL}')
 						currentGMSD = 0
 					else:
 						currentGMSD = getClientGMSD(head_imageInfo[0], head_imageInfo[1], framerate, chunkMP4, self._currentQuality)
@@ -184,6 +251,10 @@ class ClientData:
 
 					self.pqList.append((frameNumber, currentGMSD))
 				except:
+					print(f'{self._log} {self.ip} chunkMP4 {chunkMP4} has a problem')
+					print(f'{self._log} -> initURL {initURL}')
+					print(f'{self._log} -> chunkURL {chunkURL}')
+					print(f'{self._log} -> with frame number: {frameNumber}')
 					print(traceback.format_exc())
 					if _DEBUG:
 						print(f'{self._log} the client {self.ip} gmsd is not calculated')
@@ -197,6 +268,9 @@ class ClientData:
 
 	def setQualityIndex(self, qualityIndex):
 		self._qualityIndex = qualityIndex
+
+	def getToBeQualityIndex(self):
+		return self._qualityIndex
 
 	def getQualityIndex(self):
 		return self._currentQuality
@@ -218,6 +292,8 @@ class ClientData:
 				print(f'{self._log} {self.ip} client status: {status}')
 
 			self._isDisconnected = True
+			self._endTime = datetime.now()
+			self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
 
 			return True
 		except KeyError:
@@ -228,6 +304,9 @@ class ClientData:
 			return self.metrics[-1]
 
 		return None
+
+	def getMetrics(self):
+		return self.metrics
 
 	def _saveScreenResolution(self, data):
 		# save Screen resolution
@@ -319,6 +398,7 @@ class ClientData:
 
 	def _checkRequestURL(self, data):
 		url = data['request_url']
+		# print(f'{url}')
 		if _DEBUG:
 			print(f'{self._log} request_url: {url}')
 		self.requestURLList.append(url)
@@ -333,6 +413,7 @@ class ClientData:
 			self.currentInit = currentInit
 			self.initList.append(currentInit)
 
+			# print(self.initList)
 			if _DEBUG:
 				print(f'{self._log} init url comm: {currentInit["url"]}')
 
@@ -360,7 +441,7 @@ class ClientData:
 		if self._receiveClientClose(data):
 			return
 
-		self._currentQuality = data['currentQuality']
+		self._currentQuality = int(data['currentQuality'])
 		# print(f'{self._log} currentQuality: {self._currentQuality}')
 
 		initCacheThread = self._checkRequestURL(data)

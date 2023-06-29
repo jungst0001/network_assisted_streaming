@@ -48,6 +48,12 @@ class ControlServerHandler:
 		# RL server management section
 		# self._rlInterface = RLServerInterface(self.MAX_CLIENT_NUM)
 
+		# error metric
+		self.fileWriteErrorPerClient = 0
+		self.min_metric = 600
+		self.min_ip = None
+		self.max_metric = 0
+
 	def getLiveStreamingInfo(self):
 		return self._live_streaming_server, self._live_streaming_video_name
 
@@ -64,6 +70,14 @@ class ControlServerHandler:
 	def setServerData(self, serverData):
 		self._serverData = serverData
 
+	def setClusterQuality(self, attribute, quality):
+		pastQuality = self._clusters[ClusterAttribute[attribute].name].getClusterQualityIndex()
+		self._clusters[ClusterAttribute[attribute].name].setClusterQualityIndex(quality)
+		print(f'{self._log} cluster: {ClusterAttribute[attribute].name} quality: {pastQuality} -> {quality}')
+
+	def getQuality(self, client):
+		return self.quality
+
 	def _checkClients(self):
 		# print(f'{self._log} check client')
 		for p in self._currPlayers:
@@ -72,7 +86,7 @@ class ControlServerHandler:
 					p.setAttribute(ClusterAttribute(p.getScreenResolution()['height']))
 
 					if _DEBUG:
-						print(f'{self._log} client set attribute and clustering: {p.ip}, {p.getAttribute()}')
+						print(f'{self._log} client clustering: {p.ip} -> {p.getAttribute()}')
 
 					self.setCluster(p)
 
@@ -81,6 +95,7 @@ class ControlServerHandler:
 				self._clusters[p.getAttribute().name].getCurrentClients().remove(p)
 				self._clusters[p.getAttribute().name].getDisconnClients().append(p)
 				self._disconnPlayers.append(p)
+				p.getTimer().cancel()
 				print(f'{self._log} | player {p.ip} is disconnected')
 		
 		self._checkPlayerTimer.cancel()
@@ -106,6 +121,8 @@ class ControlServerHandler:
 			# self._clusters[player.getAttribute()].getClusterPlayers().append(player)
 			print(f'{self._log} | new player {player.ip} is connected')
 			print(f'{self._log} | current players is {len(self._currPlayers)}')
+		else:
+			player.getTimer().reset()
 			
 		return player
 
@@ -117,26 +134,21 @@ class ControlServerHandler:
 
 	def terminateClientThread(self):
 		for p in self._disconnPlayers:
-			for requestThread in p.rtm.requestThreadList:
-				if requestThread.is_alive():
-					requestThread.join()
+			p.rtm.joinRequestThread()
 
 		for p in self._currPlayers:
-			for requestThread in p.rtm.requestThreadList:
-				if requestThread.is_alive():
-					requestThread.join()
+			p.rtm.joinRequestThread()
 
 	def savePlayersData(self):
 		self._serverData.cancelServerTimer()
 
-		self.terminatePlayerThread()
-
-		f = open('DataStorage/' + self.filename, 'w')
+		# self.terminatePlayerThread()
+		f = open(f'{cserverConfig.LOCAL_DATASET_DIR}{self.filename}', 'w')
 		# print(f'{self._log} curr player num is {len(self._currPlayers)}')
 		# print(f'{self._log} disc player num is {len(self._disconnPlayers)}')
 
 		for p in self._currPlayers:
-			p.setPlayerEndTime(datetime.now())
+			p.setClientEndTime(datetime.now())
 
 		self._writeServerMetricInFile(f)	
 		print(f'{self._log} save data of disconnPlayers')
@@ -172,28 +184,18 @@ class ControlServerHandler:
 
 		f.write(f'time,')
 		for i in range(len(metrics)-1):
-			f.write(f'{metrics[i]["time"]:.3f},')
-		f.write(f'{metrics[-1]["time"]:.3f}\n')
+			f.write(f'{metrics[i]["time"]},')
+		f.write(f'{metrics[-1]["time"]}\n')
 		
 		f.write(f'Player Connected,')
 		for i in range(len(metrics)-1):
 			f.write(f'{metrics[i]["connected"]},')
 		f.write(f'{metrics[-1]["connected"]}\n')
 
-		f.write(f'TX (Kbps),')
+		f.write(f'Throughput (KB/s),')
 		for i in range(len(metrics)-1):
-			f.write(f'{metrics[i]["tx"]},')
-		f.write(f'{metrics[-1]["tx"]}\n')
-
-		f.write(f'RX (Kbps),')
-		for i in range(len(metrics)-1):
-			f.write(f'{metrics[i]["rx"]},')
-		f.write(f'{metrics[-1]["rx"]}\n')
-
-		f.write(f'TX + RX (Kbps),')
-		for i in range(len(metrics)-1):
-			f.write(f'{metrics[i]["tx"] + metrics[i]["rx"]},')
-		f.write(f'{metrics[-1]["tx"] + metrics[-1]["rx"]}\n')
+			f.write(f'{metrics[i]["throughput"]},')
+		f.write(f'{metrics[-1]["throughput"]}\n')
 
 		f.write(f'CPU Usage Percent,')
 		for i in range(len(metrics)-1):
@@ -225,17 +227,18 @@ class ControlServerHandler:
 
 				if len(metrics) < self.min_metric and len(metrics) > 0:
 					self.min_metric = len(metrics)
+					self.min_ip = p.ip
 
 				f.write(f'IP,{p.ip}\n')
 				f.write(f'Attribute,{p.getAttribute()}\n')
-				f.write(f'initTime,{p.getPlayerInitTime()}\n')
-				f.write(f'endTime,{p.getPlayerEndTime()}\n')
-				f.write(f'liveTime(sec),{p.getPlayerLiveTime().total_seconds()}\n')
+				f.write(f'initTime,{p.getClientInitTime()}\n')
+				f.write(f'endTime,{p.getClientEndTime()}\n')
+				f.write(f'liveTime(sec),{p.getClientLiveTime().total_seconds()}\n')
 				# f.write(f'startupDelay,{p.getStartupDelay()}\n')
-				f.write(f'Total stalling Event,{p.getStallingEvent()}\n')
+				f.write(f'Total stalling Event,{p.getTotalStallingEvent()}\n')
 				f.write(f'Total Chunk Skip Event,{p.getTotalChunkSkipEvent()}\n')
-				f.write(f'client width,{p.getPlayerResolution()["width"]}\n')
-				f.write(f'client height,{p.getPlayerResolution()["height"]}\n')
+				f.write(f'client width,{p.getScreenResolution()["width"]}\n')
+				f.write(f'client height,{p.getScreenResolution()["height"]}\n')
 
 				f.write(f'time,')
 				for i in range(len(metrics)-1):
@@ -335,8 +338,8 @@ class ControlServerHandler:
 				print(f'{self._log} file write function err: \n {traceback.format_exc()}')
 				print(f'{self._log} when processing ip: {p.ip}')
 				print(f'{self._log} And this metrics: {p.getMetrics()}')
-				print(f'{self._log} And this resolution: {p.getPlayerResolution()}')
-				print(f'{self._log} And this variable: {p.getVariable()}\n\n')
+				print(f'{self._log} And this resolution: {p.getScreenResolution()}')
+				# print(f'{self._log} And this variable: {p.getVariable()}\n\n')
 				self.fileWriteErrorPerClient += 1
 
 			f.write(f'\n')

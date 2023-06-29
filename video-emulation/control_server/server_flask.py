@@ -14,7 +14,8 @@ import math
 
 import logging
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.DEBUG)
+# log.setLevel(logging.ERROR)
+log.disabled = True
 
 playerLock = Lock()
 
@@ -130,6 +131,7 @@ def do_POST():
 		pass
 
 	player = None
+	body = None
 	try:
 		playerLock.acquire()
 		# print(f'{_LOG} client post reqeust received')
@@ -154,13 +156,21 @@ def do_POST():
 			return json.dumps(body)
 
 		player.saveClientData(request.data.decode(), playerHandler.getServerInitTime())
+
+		# log_getRLResult -> True: return cluster quality
+		body = {}
+		body['quality'] = -1
+		if log_getRLResult:
+			body['quality'] = player.getToBeQualityIndex()
+
+		body = json.dumps(body)
 	except ConnectionResetError:
 		print(f'{_LOG} the client {client_ip} is disconnected')
 	except Exception:
 		print(f'{_LOG} when {client_ip} saving, error occurs')
 		print(f'{_LOG} metric save function err: \n {traceback.format_exc()}')
 
-	return
+	return body
 
 def do_GET():
 	client_ip = request.environ['REMOTE_ADDR']
@@ -185,6 +195,19 @@ def do_GET():
 	# print(body)
 
 	return body
+
+@app.route('/setquality', methods=['POST'])
+def do_POST_setQuality():
+	data = json.loads(request.data.decode())
+
+	attribute = data['resolution']
+	quality = data['quality']
+
+	playerHandler.setClusterQuality(attribute, quality)
+
+	resp = make_response('', 204)
+	resp.headers.add("Access-Control-Allow-Origin", "*")
+	return resp
 
 @app.route('/livetime', methods=['GET'])
 def do_GET_livetime():
@@ -219,21 +242,20 @@ if __name__ == "__main__":
 		pass
 
 	print('Shutting down the web server')
+	print('save client data')
+	playerHandler.savePlayersData()
+	print(f'file write error number per a client: {playerHandler.fileWriteErrorPerClient}')
+
+	print(f'file metric length minimum: {playerHandler.min_metric}')
+	print(f'file metric length minimum ip: {playerHandler.min_ip}')
+	print(f'file metric length maximum: {playerHandler.max_metric}')
 	
 	playerHandler.terminateClientThread()
-	print(f'terminate all player process')
+	# print(f'terminate all player process')
+	# playerHandler.destroyPlayerHandler()
 
 	for proc in psutil.process_iter():
 		if len(proc.cmdline()) == 2:
 			if proc.cmdline()[1] in "server_flask.py":
 				proc.kill()
 	# playerHandler.tmp_waitPlayerToBeDisconn()
-
-	# print('save player data')
-	# playerHandler.savePlayersData()
-	# print(f'file write error number per a client: {playerHandler.fileWriteErrorPerClient}')
-
-	# print(f'file metric length minimum: {playerHandler.min_metric}')
-	# print(f'file metric length maximum: {playerHandler.max_metric}')
-
-	# playerHandler.destroyPlayerHandler()

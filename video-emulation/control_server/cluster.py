@@ -13,7 +13,7 @@ class Cluster:
 		self._currClients = []
 		self._disconnClients = []
 
-		self._qualityIndex = 0
+		self._qualityIndex = 3
 
 	def getCurrentClients(self):
 		return self._currClients

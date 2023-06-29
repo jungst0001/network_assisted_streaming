@@ -202,7 +202,7 @@ class Script:
 
 		blue_init = """\tasync function init(callback) {
 			let video = document.querySelector("video");
-			const initResponse = await httpInitGET("http://127.0.0.1:8888/livetime", video);
+			const initResponse = await httpInitGET("%s/livetime", video);
 
 			callback(initResponse);
 		}
@@ -298,7 +298,7 @@ class Script:
 
 				httpPOST(jsonData, cserver_url);
 			});
-"""%(self.ip, self.cserver_url, self.buffer_time, self.strategy, self.isAbr)
+"""%(self.cserver_url, self.ip, self.cserver_url, self.buffer_time, self.strategy, self.isAbr)
 
 		event_qualityTimer = """
 			var qualityTimer = setInterval(function() {
@@ -321,8 +321,8 @@ class Script:
 		script = blue_intro +\
 			blue_init
 
-		if self.isAbr == "false":
-			script = script + event_qualityTimer
+		# if self.isAbr == "false":
+		# 	script = script + event_qualityTimer
 
 		script = script + blue_outro
 

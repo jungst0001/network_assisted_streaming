@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 import time
+import os
 import cserverConfig
+from threading import Lock 
 from scipy import signal
  
 VIDEO_DIR = cserverConfig.VIDEO_DIR
@@ -12,37 +14,34 @@ BPS_800 = cserverConfig.BPS_800
 BPS_1200 = cserverConfig.BPS_1200
 BPS_1600 = cserverConfig.BPS_1600
 
-vidcap = cv2.VideoCapture()
+# vidcap = cv2.VideoCapture()
+cvLocks = {}
+_lockforLock = Lock()
 
-def getFrame(vidcap, frame_number, count=0,  name='video'):
+def _getLock(chunkMP4):
+    for key in cvLocks.keys():
+        if key == chunkMP4:
+            return cvLocks[key]
+
+    return None
+
+def _getServerImageName(name, frame_number):
+    return f'{cserverConfig.LOCAL_DIR}images/server_images/{name}_{frame_number}.jpeg'
+
+def getFrame(vidcap, frame_number, count=0, name='video'):
 #   vidcap.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
     vidcap.set(cv2.CAP_PROP_POS_FRAMES, count)
     hasFrames, image = vidcap.read()
     # image_name = name + '_' + str(count) + '.jpeg' # .png to .jpeg
-    image_name = f'{name}_{frame_number}.jpeg' # .png to .jpeg
+    # image_name = f'{name}_{frame_number}.jpeg' # .png to .jpeg
+    image_name = _getServerImageName(name, frame_number)
+
     if hasFrames:
         # print(f'[calculateGMSD] vidcap has frame')
         # [cv2.IMWRITE_JPEG_QUALITY, 95] (default is 95, high quality:100)
-        cv2.imwrite("images/server_images/" + image_name, image, [cv2.IMWRITE_JPEG_QUALITY, 50])
+        cv2.imwrite(image_name, image, [cv2.IMWRITE_JPEG_QUALITY, 50])
 
     return hasFrames, image_name
-
-# Old_Version
-# def getClientGMSD(client_image_name, frame_number):
-#     vidCp_1600 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_1600)
-#     succ1600, img1600 = getFrame(vidCp_1600, 0, frame_number, BPS_1600)
-#     score_v1600 = calculateGMSD('images/server_images/' + img1600,'images/' + client_image_name)
-
-#     return f'{score_v1600:.5f}'
-
-def getOriAndCompImage(client_image_name, frame_number):
-    vidCp_1600 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_1600)
-    succ1600, img1600 = getFrame(vidCp_1600, 0, frame_number, BPS_1600)
-
-    ori_img = cv2.imread('images/server_images/' + img1600, cv2.IMREAD_COLOR)
-    dist_img = cv2.imread('images/' + client_image_name, cv2.IMREAD_COLOR)
-
-    return ori_img, dist_img
 
 def _recal_frame_number(frame_number, frame_rate, chunk_unit=2):
     remain = frame_number % (frame_rate * chunk_unit)
@@ -52,18 +51,67 @@ def _recal_frame_number(frame_number, frame_rate, chunk_unit=2):
 
     return remain
 
-def getClientGMSD(client_image_name, frame_number, frame_rate, chunkMP4, currentQuality):
-    chunkVidCp = cv2.VideoCapture(chunkMP4)
-
-    recal_frame_number = _recal_frame_number(frame_number, frame_rate)
-
-    _, server_image_name = getFrame(chunkVidCp, frame_number, recal_frame_number, currentQuality)
-
-    ori_img = cv2.imread('images/server_images/' + server_image_name, cv2.IMREAD_COLOR)
-    dist_img = cv2.imread('images/' + client_image_name, cv2.IMREAD_COLOR)
+def _getClientGMSD(server_image_name, client_image_name):
+    ori_img = cv2.imread(server_image_name, cv2.IMREAD_COLOR)
+    dist_img = cv2.imread(f'{cserverConfig.LOCAL_DIR}images/{client_image_name}', cv2.IMREAD_COLOR)
     gmsd_score = calculateGMSD(ori_img, dist_img)
 
     return f'{gmsd_score:.5f}'
+
+def getClientGMSD(client_image_name, frame_number, frame_rate, chunkMP4, currentQuality):
+    server_image_name = _getServerImageName(currentQuality, frame_number)
+    isServerImage = os.path.isfile(server_image_name)
+
+    _lockforLock.acquire()
+    lock = _getLock(chunkMP4)
+    if lock is None:
+        lock = Lock()
+        cvLocks[chunkMP4] = lock
+    _lockforLock.release()
+
+    if not isServerImage:
+        while lock.locked():
+            time.sleep(0.2)
+            if os.path.isfile(server_image_name):
+                lock.acquire()
+                gmsd = _getClientGMSD(server_image_name, client_image_name)
+                lock.release()
+                return gmsd
+
+        lock.acquire()
+        chunkVidCp = cv2.VideoCapture(chunkMP4)
+
+        recal_frame_number = _recal_frame_number(frame_number, frame_rate)
+        hasFrames, server_image_name = getFrame(chunkVidCp, frame_number, recal_frame_number, currentQuality)
+        i = 0
+        while not hasFrames:
+            time.sleep(0.2)
+            hasFrames, server_image_name = getFrame(chunkVidCp, frame_number, recal_frame_number, currentQuality)
+
+            if not chunkVidCp.isOpened():
+                chunkVidCp = cv2.VideoCapture(chunkMP4)
+            i += 1
+
+            if i > 5:
+                print(f'frame number: {frame_number}')
+                print(f'frame number: {frame_rate}')
+                print(f'recal_frame_number: {recal_frame_number}')
+                print(f'chunkMP4: {chunkMP4}')
+                print(f'currentQuality: {currentQuality}')
+                if chunkVidCp.isOpened():
+                    chunkVidCp.release()
+                lock.release()
+
+                raise Exception
+        if chunkVidCp.isOpened():
+            chunkVidCp.release()
+        lock.release()
+
+    lock.acquire()
+    gmsd = _getClientGMSD(server_image_name, client_image_name)
+    lock.release()
+
+    return gmsd
 
 def calculateGMSD(image_original, image_compare):
     # ori_img = cv2.imread(image_original, cv2.IMREAD_COLOR)
@@ -131,43 +179,7 @@ def calculateGMSD(image_original, image_compare):
     return score
 
 if __name__ == "__main__":  
-    start = time.time()
-
-    vidCp_400 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_400)
-    vidCp_800 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_800)
-    vidCp_1200 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_1200)
-    vidCp_1600 = cv2.VideoCapture(VIDEO_DIR + VIDEO_NAME + BPS_1600)
-
-
-    succ1600, img1600 = getFrame(vidCp_1600, 0, 620, BPS_1600)
-    succ1200, img1200 = getFrame(vidCp_1200, 0, 620, BPS_1200)
-    succ800, img800 = getFrame(vidCp_800, 0, 620, BPS_800)
-    succ400, img400 = getFrame(vidCp_400, 0, 620, BPS_400)
-    
-
-    if (succ1600 is True) and (succ800 is True) and (succ400 is True) and (succ1200 is True):
-        score_v1600 = calculateGMSD('images/server_images/' + img1600, 'images/server_images/' + img1600)
-        score_v1200 = calculateGMSD('images/server_images/' + img1600, 'images/server_images/' + img1200)
-        score_v800 = calculateGMSD('images/server_images/' + img1600, 'images/server_images/' + img800)
-        score_v400 = calculateGMSD('images/server_images/' + img1600, 'images/server_images/' + img400)
-        
-
-        print(f'GMSD = {score_v1600}')
-        print(f'GMSD = {score_v1200}')
-        print(f'GMSD = {score_v800}')
-        print(f'GMSD = {score_v400}')
-        
-
-        # f = open("enter-video-du8min_GMSD.txt", 'w')
-        # f.write(f'original: 2000bps\n')
-        # f.write(f'2000 vs 2000: {score_v1600}\n')
-        # f.write(f'2000 vs 1400: {score_v1200}\n')
-        # f.write(f'2000 vs 800: {score_v800}\n')
-        # f.write(f'2000 vs 400: {score_v400}\n')
-        
-        # f.close()
-
-    else:
-        print('getFrame is failed')
-
-    print("Elapsed time: ", time.time() - start)
+    server_image_name = _getServerImageName(2, 97)
+    client_image_name = f'10.0.0.1-595-97.jpeg'
+    print(os.path.isfile(client_image_name))
+    print(_getClientGMSD(server_image_name, client_image_name))

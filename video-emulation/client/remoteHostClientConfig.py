@@ -19,7 +19,7 @@ class RemoteHostData:
 		self.remoteHost_PORT = 2224
 
 		# SECURITY ISSUE PART
-		self.mserverURL = "http://143.248.57.162:8088"
+		self.mserverURL = "http://143.248.57.162"
 		self.cserverURL = "http://143.248.57.162:8888"
 		self.rserverURL = "http://143.248.57.162:8889"
 

@@ -1,49 +1,28 @@
-function httpGet(url){
-	console.log("start http Get");
-
-	// let url = "http://192.168.122.3:8888";
-	let xhr = new XMLHttpRequest();
+async function httpInitGET(url, video){
+	console.log("start InitGet");
 	
-	/*
-	xhr.onload = function (player) {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			console.log("[xhr-httpget onload] print response data");
-			console.log(xhr.responseText);
-			
-			quality = xhr.responseText;
-			player.setQualityFor('video', quality);
-		}
-	}*/
-	
-	xhr.open("GET", url, true); // false for synchrounous request
-	xhr.send(null);
+	const baseurl = url;
+	const screen_width = getVideoWidth(video);
+	const screen_height = getVideoHeight(video);
 
-	return xhr;
+	const params = {
+		"width" : screen_width,
+		"height" : screen_height
+	};
+
+	const queryParams = new URLSearchParams(params);
+	let queryString = queryParams.toString();
+
+	const requrl = url + '?' + queryString;
+
+	console.log(requrl);
+
+	const response = await fetch(requrl);
+
+	return response.json();
 }
 
-// function httpPOST(data){
-// 	console.log("start http POST");
-
-// 	let url = "http://192.168.122.3:8888";
-// 	let xhr = new XMLHttpRequest();
-	
-// 	xhr.onload = function () {
-// 		if (xhr.readyState == 4 && xhr.status == 200) {
-// 			console.log("print response data");
-// 			console.log(xhr.responseText);
-			
-// 			quality = xhr.responseText; // quality is global variable
-
-// 		}
-// 	}
-	
-// 	xhr.open("POST", url); // false for synchrounous request
-// 	xhr.setRequestHeader("Content-Type", "application/json");
-// 	xhr.send(data);
-// }
-
 async function httpPOST(data, url){
-	// let url = "http://192.168.122.3:8888";
 	let response = await fetch(url, {
 		method: "POST",
 		body: data,
@@ -55,24 +34,15 @@ async function httpPOST(data, url){
 	return response;
 }
 
-// function httpPOST_SSIM(data){
-// 	let url = "http://143.248.57.162:8889";
-// 	let xhr = new XMLHttpRequest();
-	
-// 	xhr.onload = function () {
-// 		if (xhr.readyState == 4 && xhr.status == 200) {
-// 			console.log("print response data");
-// 			console.log(xhr.responseText);
-			
-// 			quality = xhr.responseText; // quality is global variable
-
-// 		}
-// 	}
-	
-// 	xhr.open("POST", url); // false for synchrounous request
-// 	xhr.setRequestHeader("Content-Type", "application/json");
-// 	xhr.send(data);
-// }
+function arrayBufferToBase64( buffer ) {
+    let binary = '';
+    let bytes = new Uint8Array( buffer );
+    let len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
 
 function getVideoWidth(video) {
 	let video_width = document.defaultView.getComputedStyle(video).getPropertyValue("width");
@@ -97,7 +67,9 @@ function takeSnapshoot(video) {
 	let ctx = canvas.getContext('2d');
 	ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-	let dataURI = canvas.toDataURL('image/png').substring(21); // or 'image/jpeg'
+	let dataURI = canvas.toDataURL('image/jpeg', 0.5).substring(22);
+
+	// let dataURI = canvas.toDataURL('image/jpeg').substring(21); // 'image/png' or 'image/jpeg'
 
 	return dataURI;
 }
@@ -126,7 +98,7 @@ function getThroughput(type, httpRequests, currentRequestHead, metricsInterval) 
     return throughput;
 }
 
-function postTimerHandler(player, currentRequestHead, ip, monitoringInterval, cserver_url) {
+function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval, chunk_skip_event) {
 	let streamInfo = player.getActiveStream().getStreamInfo();
 	let dashMetrics = player.getDashMetrics();
 	let dashAdapter = player.getDashAdapter();
@@ -139,33 +111,63 @@ function postTimerHandler(player, currentRequestHead, ip, monitoringInterval, cs
 		let bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
 		let bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
 		let adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
-		// var throughput = player.getAverageThroughput('video');
-		// var throughput = getThroughput('video', dashMetrics.getCurrentHttpRequest('video'));
-		let throughput = getThroughput('video', dashMetrics.getHttpRequests('video'), currentRequestHead[0], monitoringInterval);
-		currentRequestHead[0] = dashMetrics.getHttpRequests('video').length;
+		
 		let frameRate = adaptation.Representation_asArray.find(function (rep) {
 			return rep.id === repSwitch.to
 		}).frameRate;
-		if (frameRate.includes('/')) {
+		if (isNaN(frameRate) && frameRate.includes('/')) {
 			let split_str = frameRate.split("/");
 			frameRate = Number(split_str[0]) / Number(split_str[1])
 			frameRate = frameRate.toFixed(2)
 		}
+		let playhead = player.time();
+		let frameNumber = Math.ceil(playhead * frameRate);
+		let dataURI = 0;
 
-		console.log('throughput is:');
-		console.log(throughput);
+		if (event.request.url.includes('init')){
+			console.log('get init.mp4');
+		} else {
+			dataURI = takeSnapshoot(video);
+		}
 
+		if (isStalling) {
+			isStalling = "True";
+		} else {
+			isStalling = "False";
+		}
+
+		let d = new Date();
+		let eInterval = d.getTime() - eventInterval.getTime();
+		let currentQuality = player.getQualityFor('video');
 
 		let jsonData = JSON.stringify({
 			"client_ip" : ip,
 			"bufferLevel": bufferLevel,
 			"bitrate": bitrate,
 			"framerate": frameRate,
-			"throughput": throughput,
-			"index": currentRequestHead[1]
+			"playhead": playhead,
+			"request_url": event.request.url,
+			"request_url_quality": event.request.quality,
+			"request_url_startTime": event.request.startTime,
+			"response_length": event.response.byteLength,
+			"stalling": isStalling,
+			"requestInterval": eInterval,
+			"currentQuality": currentQuality,
+			"chunk_skip": chunk_skip_event,
+			"captured": {
+				"frameNumber": frameNumber,
+				"type": "jpeg",
+				"image": dataURI
+			}
 		});
-		httpPOST(jsonData, cserver_url);
-		currentRequestHead[1] += 1
+		
+		httpPOST(jsonData, cserver_url)
+			.then(res => res.json())
+			.then(res => {
+			if (res.quality >= 0) {
+				player.setQualityFor('video', res.quality);
+			}
+		});
 	}
 }
 

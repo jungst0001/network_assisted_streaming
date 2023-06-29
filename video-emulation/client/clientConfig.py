@@ -35,7 +35,7 @@ clientHostName = [
 
 LOCAL_DIR = '/home/wins/jin/video_emulation/client/'
 LOCAL_RUN_DIR = LOCAL_DIR + 'Client.conf/'
-LOCAL_DASH_DIR = LOCAL_DIR + 'Client.conf/dashjs/test/'
+LOCAL_DASH_DIR = LOCAL_DIR + 'Client.conf/dashjs/emulator/'
 LOCAL_JS_DIR = LOCAL_DASH_DIR + 'client/'
 
 REMOTE_DIR = '/home/wins/'
@@ -81,4 +81,10 @@ about:config
 browser.link.open_newwindow.override.external
 2 = open external links in a new window
 
+4.
+cache off
+
+about:config
+browser.cache.disk.enable
+true -> false
 """

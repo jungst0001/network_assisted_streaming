@@ -90,7 +90,7 @@ class RemoteHostHandler:
 			else:
 				self.rhdList[i].runableClientNum = pns[i] // self.options.REMOTE_MAX_PLAYER_PER_CLIENT + 1
 
-	def getScreenResolutionListForRatio(self):
+	def _getScreenResolutionListForRatio(self):
 		srl = []
 		resolution_info = []
 
@@ -246,7 +246,7 @@ def main():
 	rh = RemoteHostHandler()
 	rh.setOptions(options)
 
-	print(rh.getScreenResolutionListForRatio())
+	print(rh._getScreenResolutionListForRatio())
 	
 	# rh.updateRemoteJSFile()
 	# rh.updateRemoteSHFile()

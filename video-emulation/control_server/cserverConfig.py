@@ -21,11 +21,11 @@ isEMULATION = True
 cserver_user = 'wins'
 cserver_password = 'wins2-champion'
 
-cserver_IP = '127.0.0.1'
+cserver_IP = '192.168.0.104'
 cserver_PORT = 8888
 log_sendRLData = False
 log_onlyMonitorQoE = False
-log_getRLResult = False # False or True | False mean dynamic or other abr algorithm
+log_getRLResult = True # False or True | False mean dynamic or other abr algorithm
 
 # Video Comparison config
 VIDEO_DIR = '/home/wins/Videos/'

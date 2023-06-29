@@ -34,7 +34,7 @@ class AutoDataGeneratorOptions:
 		self.REMOTE_NUM_OF_PLAYER = 25
 		self.NUM_OF_TOTAL_PLAYER = self.NUM_Of_PLAYER + self.REMOTE_NUM_OF_PLAYER
 
-		self.VIDEO_RUNNING_TIME = 50 # unit is second
+		self.VIDEO_RUNNING_TIME = 100 # unit is second
 		self.PLAYER_CATEGORY = "firefox" # or "firefox" "google-chrome-stable"
 
 		self.MSERVER_URL = "http://143.248.57.162" # static URL
@@ -49,12 +49,12 @@ class AutoDataGeneratorOptions:
 
 		###############################################
 				# VM OPTION #
-		self.LOCAL_MAX_PLAYER_PER_CLIENT = 30
-		self.REMOTE_MAX_PLAYER_PER_CLIENT = 30
+		self.LOCAL_MAX_PLAYER_PER_CLIENT = 1
+		self.REMOTE_MAX_PLAYER_PER_CLIENT = 1
 		###############################################
 				# Auto OPTION #
-		self.INCOMMING_TIME = 5
-		self.OUTCOMMING_TIME = 5
+		self.INCOMMING_TIME = 30
+		self.OUTCOMMING_TIME = 30
 
 def log_string(str):
 	log = '\033[95m' + str + '\033[0m'
@@ -110,7 +110,7 @@ def run_server(isRunning, isTerminated):
 		output = channel.recv(1024).decode(sys.stdout.encoding)
 		sys.stdout.write(output)
 
-		if "Shutting down" in output:
+		if "maximum" in output:
 			isRunning[0] = False
 
 	print(log_string("Channel closing"))
@@ -139,8 +139,9 @@ def close_server():
 	# 	print(log_string(line))
 	##
 
-	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/*.png ")
-	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/server_images/*.png ")
+	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/cacheStorage/*")
+	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/*.jpeg")
+	stdin, stdout, stderr = ssh.exec_command("rm /home/wins/jin/video_emulation/control_server/images/server_images/*.jpeg")
 
 	ssh.close()
 
@@ -376,7 +377,7 @@ if __name__ == "__main__":
 	# 	remoteHostHandler.writeRemotePlayerScript()
 
 	try:
-		update = True
+		update = False
 		options.BUFFER_TIME = 4
 		if update:
 			remoteHostHandler.setOptions(options)
