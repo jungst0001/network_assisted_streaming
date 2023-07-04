@@ -1,14 +1,20 @@
 from enum import Enum, auto
 
+class SubscriptionPlan(Enum):
+	Premium = 1
+	Standard = 2
+	Basic = 3
+
 class ClusterAttribute(Enum):
 	FHD = 1080
 	HD = 720
 	SD = 480
 
 class Cluster:
-	def __init__(self, attribute:ClusterAttribute):
+	def __init__(self, attribute:ClusterAttribute, plan:SubscriptionPlan):
 		self._log = '[Cluster]'
 
+		self.plan = plan
 		self.attribute = attribute
 		self._currClients = []
 		self._disconnClients = []
@@ -28,6 +34,18 @@ class Cluster:
 
 	def getClusterQualityIndex(self):
 		return self._qualityIndex
+
+	def disconnectClient(self, client):
+		self._currClients.remove(client)
+		self._disconnClients.append(client)
+
+		if client.isMaster == True:
+			client.isMaster = False
+			self.setMaster()
+
+	def setMaster(self):
+		if len(self._currClients) >= 1:
+			self._currClients[0].isMaster = True
 
 if __name__ == "__main__":
 	LOG = '[cluster.py main]'

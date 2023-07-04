@@ -1,5 +1,7 @@
 import sys, os
 import json, traceback
+import numpy as np
+
 if __name__ == "__main__" or __name__ == "remoteHostHandler":
 	import remoteHostClientConfig
 	import player_generator
@@ -31,6 +33,8 @@ class RemoteHostHandler:
 		# num of total applied ratio is len(rhdList)
 		self.player_ratio = remoteHostClientConfig.player_ratio
 		self.resolution_ratio = remoteHostClientConfig.resolution_ratio 
+		self.resol_plan_ratio = remoteHostClientConfig.resol_plan_ratio
+		self.resol_plan_ratio = np.array(self.resol_plan_ratio)
 
 		for rhd in self.rhdList:
 			rhd.sshManager = fileUpload.SSHManager()
@@ -61,54 +65,24 @@ class RemoteHostHandler:
 
 		return totalClientIPList
 
-	def _getPlayerNumforRatio(self):
-		# print(f'{self._LOG} | _getPlayerNumforRatio()')
-		pns = []
+	def _getPlayerAttributeInfo(self, maxPlayerNum):
+		# print(f'{self._LOG} | _getPlayerAttributeInfo()')
+		player_attribute_info = []
 
-		if len(self.player_ratio) < len(self.rhdList):
-			print(f'player ratio is smaller than remoteHostData')
+		if np.sum(self.resol_plan_ratio) != maxPlayerNum:
+			print(f'resolutionxplan summation is not equal to number of clients')
 			print(f'you must edit player ratio in remoteHostClientConfig.py')
 			print(f'program is forlcy terminated')
 
 			exit()
 
-		for i in range(len(self.rhdList)):
-			pn = self.options.REMOTE_NUM_OF_PLAYER * self.player_ratio[i] // sum(self.player_ratio)
+		for i in range(self.resol_plan_ratio.shape[0]):
+			for j in range(self.resol_plan_ratio.shape[1]):
+				player_attribute_info.append((i, remoteHostClientConfig.RESOLUTION[j]))
 
-			pns.append(pn)
+		return player_attribute_info
 
-		if self.options.REMOTE_NUM_OF_PLAYER != sum(pns):
-			pns[0] = pns[0] + self.options.REMOTE_NUM_OF_PLAYER - sum(pns)
-
-		print(f'remote player_ratio: {pns}')
-
-		for i in range(len(self.rhdList)):
-			self.rhdList[i].assignedPlayerNum = pns[i]
-
-			if pns[i] % self.options.REMOTE_MAX_PLAYER_PER_CLIENT == 0:
-				self.rhdList[i].runableClientNum = pns[i] // self.options.REMOTE_MAX_PLAYER_PER_CLIENT
-			else:
-				self.rhdList[i].runableClientNum = pns[i] // self.options.REMOTE_MAX_PLAYER_PER_CLIENT + 1
-
-	def _getScreenResolutionListForRatio(self):
-		srl = []
-		resolution_info = []
-
-		for i in range(len(self.resolution_ratio)):
-			srl.append(self.options.REMOTE_NUM_OF_PLAYER * self.resolution_ratio[i] // sum(self.resolution_ratio))
-
-		if self.options.REMOTE_NUM_OF_PLAYER != sum(srl):
-			srl[-1] = srl[-1] + (self.options.REMOTE_NUM_OF_PLAYER) - sum(srl)
-
-		for i in range(len(srl)):
-			for j in range(srl[i]):
-				resolution_info.append(remoteHostClientConfig.RESOLUTION[i])
-
-		print(f'remote screen_ratio: {srl}')
-
-		return resolution_info
-
-	def _makePlayer(self, remoteHostData, filename="test", ip="10.0.0.1", resolution=(854, 480)):
+	def _makePlayer(self, remoteHostData, filename="test", ip="10.0.0.1", attribute_info=(2, (854, 480))):
 		scriptOption = player_blueprint.ScriptOption()
 		scriptOption.mserver_url = remoteHostData.mserverURL
 		scriptOption.cserver_url = remoteHostData.cserverURL
@@ -117,8 +91,9 @@ class RemoteHostHandler:
 		scriptOption.received_quality_interval = self.options.QUALITY_QUERY_INTERVAL 
 		scriptOption.strategy = self.options.ABR_STRATEGY
 		scriptOption.ip = ip
-		scriptOption.width = resolution[0]
-		scriptOption.height = resolution[1]
+		scriptOption.width = attribute_info[1][0]
+		scriptOption.height = attribute_info[1][1]
+		scriptOption.plan = attribute_info[0]
 
 		sh_filename, html_filename = player_script_maker.writePlayer(scriptOption, filename)
 
@@ -153,8 +128,7 @@ class RemoteHostHandler:
 
 		print(f'remote buffer time: {self.options.BUFFER_TIME}')
 
-		self._getPlayerNumforRatio() # assign player num with player ratio
-		resolution_info = self._getScreenResolutionListForRatio()
+		attribute_info = self._getPlayerAttributeInfo(maxPlayerNum)
 
 		for rhd in self.rhdList:
 			for i in range(currentPlayerNum, currentPlayerNum + rhd.assignedPlayerNum): 
@@ -162,7 +136,7 @@ class RemoteHostHandler:
 				filename = "Bf" + str(self.options.BUFFER_TIME) + "-Abr-" + str(i)
 				rhd.fnameList.append(filename)
 				ip = player_generator.createVirtualIP(i)
-				sh_filename, html_filename = self._makePlayer(rhd, filename, ip, resolution_info[i])
+				sh_filename, html_filename = self._makePlayer(rhd, filename, ip, attribute_info[i])
 
 				rhd.htmlFileList.append(html_filename)
 				rhd.shFileList.append(sh_filename)

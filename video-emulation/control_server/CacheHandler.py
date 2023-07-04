@@ -27,6 +27,8 @@ class CacheHandler:
 		return purl
 
 	def _getLock(self, cacheName):
+		global _PREP_LOCKS
+
 		for key in _PREP_LOCKS.keys():
 			if key == cacheName:
 				return _PREP_LOCKS[cacheName]
@@ -42,6 +44,9 @@ class CacheHandler:
 
 	# if receiving url, copy cache data to local and preprocessing the data readablly
 	def initCacheData(self, url):
+		global _LOCK_FOR_LOCK
+		global _PREP_LOCKS
+
 		cacheName = self.getMD5Hash(url)
 
 		isFile = os.path.isfile(self.localDir + cacheName)

@@ -1,5 +1,5 @@
 from clientData import ClientData
-from cluster import ClusterAttribute, Cluster
+from cluster import ClusterAttribute, SubscriptionPlan, Cluster
 import csv, time
 import traceback
 from datetime import datetime
@@ -23,12 +23,15 @@ class ControlServerHandler:
 		self._disconnPlayers = []
 
 		# video management section
+		self._video_index = cserverConfig.video_index
 		self._live_streaming_server = cserverConfig.video_proxy_server
-		self._live_streaming_video_name = cserverConfig.video_list[0]
+		self._live_streaming_video_name = cserverConfig.video_list[self._video_index]
+		self._live_streaming_chunk_key = cserverConfig.chunk_key_list[self._video_index]
 
 		# cluster management section
 		self._clusters = {}
 		for ca in ClusterAttribute:
+			for 
 			cluster = Cluster(ca.name)
 			self._clusters[ca.name] = cluster
 
@@ -65,15 +68,20 @@ class ControlServerHandler:
 		return self._serverInitTime
 
 	def setCluster(self, client):
-		self._clusters[client.getAttribute().name].getCurrentClients().append(client)
+		cluster = self._clusters[client.getAttribute().name][client.getSubscriptionPlan().name]
+		c_currClients = cluster.getCurrentClients().
+		c_currClients.append(client)
+
+		if len(c_currClients) == 1:
+			cluster.setMaster()
 
 	def setServerData(self, serverData):
 		self._serverData = serverData
 
-	def setClusterQuality(self, attribute, quality):
-		pastQuality = self._clusters[ClusterAttribute[attribute].name].getClusterQualityIndex()
-		self._clusters[ClusterAttribute[attribute].name].setClusterQualityIndex(quality)
-		print(f'{self._log} cluster: {ClusterAttribute[attribute].name} quality: {pastQuality} -> {quality}')
+	def setClusterQuality(self, attribute, plan, quality):
+		pastQuality = self._clusters[ClusterAttribute[attribute].name][SubscriptionPlan[plan].name].getClusterQualityIndex()
+		self._clusters[ClusterAttribute[attribute].name][SubscriptionPlan[plan].name].setClusterQualityIndex(quality)
+		print(f'{self._log} cluster: {ClusterAttribute[attribute].name} {[SubscriptionPlan[plan].name]} quality: {pastQuality} -> {quality}')
 
 	def getQuality(self, client):
 		return self.quality
@@ -84,6 +92,7 @@ class ControlServerHandler:
 			if p.getAttribute() == None:
 				if p.getScreenResolution()['height'] != 0:
 					p.setAttribute(ClusterAttribute(p.getScreenResolution()['height']))
+					p.setSubscriptionPlan(SubscriptionPlan(p.getSubscriptionPlan()))
 
 					if _DEBUG:
 						print(f'{self._log} client clustering: {p.ip} -> {p.getAttribute()}')
@@ -92,8 +101,7 @@ class ControlServerHandler:
 
 			if p.isDisconnected():
 				self._currPlayers.remove(p)
-				self._clusters[p.getAttribute().name].getCurrentClients().remove(p)
-				self._clusters[p.getAttribute().name].getDisconnClients().append(p)
+				self._clusters[p.getAttribute().name][p.getSubscriptionPlan().name].disconnectClient(p)
 				self._disconnPlayers.append(p)
 				p.getTimer().cancel()
 				print(f'{self._log} | player {p.ip} is disconnected')
@@ -117,6 +125,7 @@ class ControlServerHandler:
 
 		if result is False:
 			player = ClientData(ip, port)
+			player.chunk_key = self._live_streaming_chunk_key
 			self._currPlayers.append(player)
 			# self._clusters[player.getAttribute()].getClusterPlayers().append(player)
 			print(f'{self._log} | new player {player.ip} is connected')
@@ -231,6 +240,7 @@ class ControlServerHandler:
 
 				f.write(f'IP,{p.ip}\n')
 				f.write(f'Attribute,{p.getAttribute()}\n')
+				f.write(f'Subscription Plan,{p.getSubscriptionPlan()}\n')
 				f.write(f'initTime,{p.getClientInitTime()}\n')
 				f.write(f'endTime,{p.getClientEndTime()}\n')
 				f.write(f'liveTime(sec),{p.getClientLiveTime().total_seconds()}\n')
@@ -265,12 +275,17 @@ class ControlServerHandler:
 				# for i in range(len(metrics)-1):
 				# 	f.write(f'{metrics[i]["bufferLevel"]},')
 				# f.write(f'{metrics[-1]["bufferLevel"]}\n')
+
+				f.write(f'master,')
+				for i in range(len(metrics)-1):
+					f.write(f'{metrics[i]["master"]},')
+				f.write(f'{metrics[-1]["master"]}\n')
 				
 				f.write(f'GMSD,')
 				for i in range(len(metrics)-1):
 					f.write(f'{metrics[i]["GMSD"]},')
 
-					if float(metrics[i]["GMSD"]) < 0.75:
+					if float(metrics[i]["GMSD"]) < 0.70:
 						outlier += 1
 						continue
 					else:
@@ -278,7 +293,7 @@ class ControlServerHandler:
 				f.write(f'{metrics[-1]["GMSD"]}\n')
 				# print(f'stalling Time type: {type(metrics[i]["GMSD"])}')
 
-				if float(metrics[-1]["GMSD"]) < 0.75:
+				if float(metrics[-1]["GMSD"]) < 0.70:
 						outlier += 1
 				else:
 					total_GMSD += float(metrics[-1]["GMSD"])
@@ -321,6 +336,11 @@ class ControlServerHandler:
 				for i in range(len(metrics)-1):
 					f.write(f'{metrics[i]["throughput"]},')
 				f.write(f'{metrics[-1]["throughput"]}\n')
+
+				f.write(f'Latency,')
+				for i in range(len(metrics)-1):
+					f.write(f'{metrics[i]["latency"]},')
+				f.write(f'{metrics[-1]["latency"]}\n')
 
 				# f.write(f'TX (KBps),')
 				# for i in range(len(metrics)-1):

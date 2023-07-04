@@ -4,7 +4,7 @@ from threading import Timer, Lock, Thread
 import time
 import math
 import base64
-from cluster import ClusterAttribute, Cluster
+from cluster import ClusterAttribute, SubscriptionPlan, Cluster
 from calculateSSIM import getClientSSIM
 from calculateGMSD import getClientGMSD
 from CacheHandler import CacheHandler
@@ -75,12 +75,15 @@ class ClientData:
 
 		# client streaming info
 		self._attribute = None
+		self._plan = None
+		self.isMaster = False
 
 		self._qualityIndex = 0
 		self._currentQuality = 0
 		self.requestURLList = []
 		
 		self.initList = []
+		self.chunk_key = None
 		self.currentInit = None
 		self.chunkList = []
 		self.currentChunk = None
@@ -93,7 +96,7 @@ class ClientData:
 		self.pqList = []
 
 		# check Timer
-		self._interval = 100
+		self._interval = 10
 		self._timer = ClientTimer(self._interval, self._setTimer, self.ip)
 		self._timer.run()
 
@@ -143,7 +146,7 @@ class ClientData:
 		if _DEBUG:
 			print(f'{self._log} playhead: {current_playhead:.2f}, chunkNumber: {chunkNumber}')
 
-		chunkKey = f'2s{chunkNumber}.m4s'
+		chunkKey = self.chunk_key.format(Number=chunkNumber)
 
 		initURL = None
 		# print(self.initList)
@@ -208,6 +211,15 @@ class ClientData:
 			frameNumber = imageData["frameNumber"]
 			extension = imageData["type"]
 			image = imageData["image"]
+
+			if image == 0:
+				print(f'{self._log} {self.ip} this is slave : {self.isMaster}')
+				self.rtm.pqLock.acquire()
+				self.pqList.append((frameNumber, 0))
+				self.rtm.pqLock.release()
+
+				return
+
 			framerate = self._getFrameRate(data)
 
 			cacheThread = Thread(target=self._getServerImageFromCache, args=(frameNumber, framerate, self._currentQuality),)
@@ -278,8 +290,14 @@ class ClientData:
 	def setAttribute(self, attribute):
 		self._attribute = attribute
 
+	def setSubscriptionPlan(self, plan):
+		self._plan = plan
+
 	def getAttribute(self):
 		return self._attribute
+
+	def getSubscriptionPlan(self):
+		return self._plan
 
 	def isDisconnected(self):
 		return self._isDisconnected
@@ -308,13 +326,20 @@ class ClientData:
 	def getMetrics(self):
 		return self.metrics
 
-	def _saveScreenResolution(self, data):
+	def _saveSubscriptionPlan(self, data):
+		self._plan = data['plan']
+
+		print(f'{self._log} | {self.ip} subscription plan: {SubscriptionPlan(self._plan).name}')
+
+	def _saveScreenResolutionAndPlan(self, data):
 		# save Screen resolution
 		try:
 			screen_resolution = data["resolution"]
 			self.screen_resolution = {}
 			self.screen_resolution["width"] = screen_resolution["width"]
 			self.screen_resolution["height"] = screen_resolution["height"]
+
+			self._saveSubscriptionPlan(data)
 
 			print(f'{self._log} | {self.ip} screen resolution: {self.screen_resolution["width"]}x{self.screen_resolution["height"]}')
 
@@ -396,6 +421,17 @@ class ClientData:
 
 		return framerate
 
+	def _getServerLatency(self, data):
+		serverLatency = data['latency'] # unit: ms
+
+		return f'{serverLatency}'
+
+	def _getMaster(self):
+		if self.isMaster:
+			return 'M'
+		else:
+			return 'S'
+
 	def _checkRequestURL(self, data):
 		url = data['request_url']
 		# print(f'{url}')
@@ -434,7 +470,7 @@ class ClientData:
 
 	def _saveClientData(self, data, serverInitTime):
 		# handle only screen resolution
-		if self._saveScreenResolution(data):
+		if self._saveScreenResolutionAndPlan(data):
 			return
 
 		# handle only client close
@@ -476,6 +512,10 @@ class ClientData:
 
 		# save num of chunk skip
 		metric['chunk_skip'] = self._getChunkSkip(data)
+
+		metric['latency'] = self._getServerLatency(data)
+
+		metric['master'] = self._getMaster()
 
 		if len(self.metrics) == 0:
 			print(f'{self._log} | {self.ip} initial bitrate: {metric["bitrate"]}')

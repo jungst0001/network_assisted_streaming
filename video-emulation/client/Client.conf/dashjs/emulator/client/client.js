@@ -98,7 +98,8 @@ function getThroughput(type, httpRequests, currentRequestHead, metricsInterval) 
     return throughput;
 }
 
-function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval, chunk_skip_event) {
+function postHandler(player, video, event, ip, cserver_url, isStalling, eventInterval, 
+	chunk_skip_event, server_latency, isMaster) {
 	let streamInfo = player.getActiveStream().getStreamInfo();
 	let dashMetrics = player.getDashMetrics();
 	let dashAdapter = player.getDashAdapter();
@@ -127,7 +128,9 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 		if (event.request.url.includes('init')){
 			console.log('get init.mp4');
 		} else {
-			dataURI = takeSnapshoot(video);
+			if (isMaster[0] == true) {
+				dataURI = takeSnapshoot(video);
+			}
 		}
 
 		if (isStalling) {
@@ -154,6 +157,7 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 			"requestInterval": eInterval,
 			"currentQuality": currentQuality,
 			"chunk_skip": chunk_skip_event,
+			"latency" : server_latency,
 			"captured": {
 				"frameNumber": frameNumber,
 				"type": "jpeg",
@@ -164,6 +168,10 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 		httpPOST(jsonData, cserver_url)
 			.then(res => res.json())
 			.then(res => {
+			if (res.master != 0) {
+				isMaster[0] = true
+			}
+
 			if (res.quality >= 0) {
 				player.setQualityFor('video', res.quality);
 			}

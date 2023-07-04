@@ -15,6 +15,7 @@ class ScriptOption:
 		self.ip = "10.0.0.1"
 		self.width = 854
 		self.height = 480
+		self.plan = 2
 
 class Script:
 	def __init__(self):
@@ -25,8 +26,9 @@ class Script:
 		received_quality_interval = 2000
 		strategy = "ABR_STRATEGY_DYNAMIC"
 		ip = None
-		width = 854,
+		width = 854
 		height = 480
+		plan = 2
 
 	def makeScript(self, 
 		mserver_url="http://192.168.122.2:8088", 
@@ -37,7 +39,8 @@ class Script:
 		abr_strategy="Dynamic",
 		ip=None,
 		width = 854,
-		height = 480):
+		height = 480,
+		plan = 2):
 		self.mserver_url = mserver_url
 		self.cserver_url = cserver_url
 		self.buffer_time = bf_time
@@ -46,6 +49,7 @@ class Script:
 		self.ip = ip
 		self.width = width
 		self.height = height
+		self.plan = 2
 
 		if abr_strategy == "BOLA":
 			self.strategy = "abrBola"
@@ -241,6 +245,8 @@ class Script:
 			var isStalling = false;
 			var eventInterval = new Date();
 			var chunk_skip_event = 0;
+			var request_startTime;
+			var isMaster = [false];
 
 			player.on(dashjs.MediaPlayer.events["PLAYBACK_STARTED"], function (){
 				if(playback_startTimeOnOff == true) {
@@ -249,8 +255,15 @@ class Script:
 				}
 			});
 
+			player.on(dashjs.MediaPlayer.events["FRAGMENT_LOADING_STARTED"], function (e) {
+				request_startTime = new Date();
+			});
+
 			player.on(dashjs.MediaPlayer.events["FRAGMENT_LOADING_COMPLETED"], function (e) {
-				postHandler(player, video, e, client_ip, cserver_url, isStalling, eventInterval, chunk_skip_event);
+				request_endTime = new Date();
+				server_latency = request_endTime - requeststartTime; 
+				postHandler(player, video, e, client_ip, cserver_url, isStalling, 
+					eventInterval, chunk_skip_event, server_latency, isMaster);
 				isStalling = false;
 				eventInterval = new Date();
 				chunk_skip_event = 0;
@@ -270,12 +283,14 @@ class Script:
 
 				let video_width = getVideoWidth(video);
 				let video_height = getVideoHeight(video);
+				let plan = %d;
 				let jsonResolutionData = JSON.stringify({
 					"client_ip" : client_ip,
 					"resolution": {
 						"width": video_width,
 						"height": video_height
-					}
+					},
+					"plan" : plan
 				});
 
 				httpPOST(jsonResolutionData, cserver_url);
@@ -298,7 +313,7 @@ class Script:
 
 				httpPOST(jsonData, cserver_url);
 			});
-"""%(self.cserver_url, self.ip, self.cserver_url, self.buffer_time, self.strategy, self.isAbr)
+"""%(self.cserver_url, self.ip, self.cserver_url, self.buffer_time, self.strategy, self.isAbr, self.plan)
 
 		event_qualityTimer = """
 			var qualityTimer = setInterval(function() {

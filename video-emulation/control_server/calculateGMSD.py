@@ -19,6 +19,7 @@ cvLocks = {}
 _lockforLock = Lock()
 
 def _getLock(chunkMP4):
+    global cvLocks
     for key in cvLocks.keys():
         if key == chunkMP4:
             return cvLocks[key]
@@ -61,6 +62,9 @@ def _getClientGMSD(server_image_name, client_image_name):
 def getClientGMSD(client_image_name, frame_number, frame_rate, chunkMP4, currentQuality):
     server_image_name = _getServerImageName(currentQuality, frame_number)
     isServerImage = os.path.isfile(server_image_name)
+
+    global _lockforLock
+    global cvLocks
 
     _lockforLock.acquire()
     lock = _getLock(chunkMP4)

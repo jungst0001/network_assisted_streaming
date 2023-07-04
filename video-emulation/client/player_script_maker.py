@@ -71,6 +71,7 @@ def main():
 	scriptOption.ip = "10.0.0.1"
 	scriptOption.width = 854
 	scriptOption.height = 480
+	scriptOption.plan = 2
 
 	print(f'file path: {dashPath}')
 	print(f'file name: {filename}')

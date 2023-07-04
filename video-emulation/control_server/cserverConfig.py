@@ -38,8 +38,22 @@ BPS_1600 = '_2000_dashinit.mp4'
 
 # Video url
 video_proxy_server = 'http://143.248.57.162/'
+video_index = 0
 video_list = [
-	'dash/BigBuckBunny/2sec_mod_BigBuckBunny.mpd'
+	'dash/BigBuckBunny/2sec/2sec_mod_BigBuckBunny.mpd',
+	'dash/RedBullPlayStreets/2sec/2sec_mod_RedBull.mpd',
+	'dash/ElephantsDream/2sec/2sec_mod_ElephantsDream.mpd',
+	'dash/TearsOfSteel/2sec/2sec_mod_TearsOfSteel.mpd',
+	'dash/TheSwissAccount/2sec/2sec_mod_TheSwissAccount.mpd',
+	'dash/Valkaama/2sec/2sec_mod_Valkaama.mpd'
+]
+chunk_key_list = [
+	'BigBuckBunny_2s{Number}.m4s',
+	'RedBull_2{Number}.m4s',
+	'ElephantsDream_2s{Number}.m4s',
+	'TearsOfSteel_2s_{Number}.m4s',
+	'TheSwissAccount_2s{Number}.m4s',
+	'Valkaama_2{Number}.m4s'
 ]
 
 # Cache Info

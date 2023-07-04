@@ -112,6 +112,8 @@ def _changeQuality(data):
 	print(f'{_LOG} change quality: {oldQuality} -> {playerHandler.getQuality()}')
 
 def do_POST():
+	global playerLock
+
 	client_ip = request.environ['REMOTE_ADDR']
 	client_port = request.environ['REMOTE_PORT']
 
@@ -173,6 +175,8 @@ def do_POST():
 	return body
 
 def do_GET():
+	global playerLock
+
 	client_ip = request.environ['REMOTE_ADDR']
 	client_port = request.environ['REMOTE_PORT']
 

@@ -1,6 +1,8 @@
 
 player_ratio = None
 resolution_ratio = None
+plan_ratio = None
+resol_plan_ratio = None
 
 RESOLUTION = [
 	(1980, 1080),
@@ -86,8 +88,15 @@ def setRemoteHostData():
 	# edit player ratio if remoteHostData num is changed
 	global player_ratio
 	global resolution_ratio
-	player_ratio = (20, 20, 2, 4, 4) # (20, 20, 2, 4, 4) (0, 0, 1, 1, 1)
-	resolution_ratio = (5, 15 ,5) # mean (FHD, HD, SD)
+	global plan_ratio
+	global resol_plan_ratio
+
+	resol_plan_ratio = [
+		# FHD, HD, SD
+		[3, 0, 0] # Premium		10
+		[2, 10, 0] # Standard	12
+		[1, 3, 6] #  Basic		3
+	]
 
 	rhdList = []
 
