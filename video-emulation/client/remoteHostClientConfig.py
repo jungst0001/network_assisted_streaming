@@ -91,11 +91,18 @@ def setRemoteHostData():
 	global plan_ratio
 	global resol_plan_ratio
 
+	# resol_plan_ratio = [
+	# 	# FHD, HD, SD
+	# 	[3, 0, 0], # Premium		10
+	# 	[2, 10, 0], # Standard	12
+	# 	[1, 3, 6] #  Basic		3
+	# ]
+
 	resol_plan_ratio = [
 		# FHD, HD, SD
-		[3, 0, 0] # Premium		10
-		[2, 10, 0] # Standard	12
-		[1, 3, 6] #  Basic		3
+		[0, 0, 0], # Premium		10
+		[0, 0, 0], # Standard	12
+		[5, 15, 5] #  Basic		3
 	]
 
 	rhdList = []

@@ -169,7 +169,9 @@ function postHandler(player, video, event, ip, cserver_url, isStalling, eventInt
 			.then(res => res.json())
 			.then(res => {
 			if (res.master != 0) {
-				isMaster[0] = true
+				isMaster[0] = true;
+			} else {
+				isMaster[0] = false;
 			}
 
 			if (res.quality >= 0) {

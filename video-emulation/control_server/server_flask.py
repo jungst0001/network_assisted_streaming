@@ -4,6 +4,7 @@ import json
 from ControlServerHandler import ControlServerHandler
 from threading import Timer, Lock
 from serverData import ServerData
+import serverData as sd
 from calculateGMSD import calculateGMSD, getFrame 
 import subprocess
 import traceback
@@ -11,7 +12,7 @@ import cserverConfig
 from datetime import datetime
 import psutil
 import math
-
+import time
 import logging
 log = logging.getLogger('werkzeug')
 # log.setLevel(logging.ERROR)
@@ -157,11 +158,19 @@ def do_POST():
 
 			return json.dumps(body)
 
+		# start = time.time()
+		# print(f'{_LOG} the client {client_ip} request comming!!')
 		player.saveClientData(request.data.decode(), playerHandler.getServerInitTime())
+		# print(f'{_LOG} the client {client_ip} request elapsed: {round((time.time()-start) * 1000)}ms')
 
 		# log_getRLResult -> True: return cluster quality
 		body = {}
 		body['quality'] = -1
+
+		if player.isMaster:
+			body['master'] = 1
+		else:
+			body['master'] = 0
 		if log_getRLResult:
 			body['quality'] = player.getToBeQualityIndex()
 
@@ -199,6 +208,39 @@ def do_GET():
 	# print(body)
 
 	return body
+
+@app.route('/disconnect', methods=['POST'])
+def do_POST_disconnect():
+	global playerLock
+
+	client_ip = None 
+	player = None
+
+	resp = make_response('', 204)
+	resp.headers.add("Access-Control-Allow-Origin", "*")
+
+	try:
+		data = json.loads(request.data.decode())
+		client_ip = data['client_ip']
+	except KeyError:
+		print(f'{_LOG} client ip cannot be specific {data}')
+		return resp
+
+	try:
+		playerLock.acquire()
+		bool_player, player = playerHandler.isPlayer(client_ip)
+	finally:
+		playerLock.release()
+
+
+	if bool_player is False:
+		print(f'{_LOG} player is none, request over')
+		return resp
+
+	# print(f'signal client: {client_ip} to be disconnecting')
+	player.setDisconnected()
+	
+	return resp
 
 @app.route('/setquality', methods=['POST'])
 def do_POST_setQuality():
@@ -247,6 +289,11 @@ if __name__ == "__main__":
 
 	print('Shutting down the web server')
 	print('save client data')
+	serverData.cancelServerTimer()
+
+	# if serverData.tsThread.is_alive():
+	# 	serverData.isRunning = [False]
+
 	playerHandler.savePlayersData()
 	print(f'file write error number per a client: {playerHandler.fileWriteErrorPerClient}')
 

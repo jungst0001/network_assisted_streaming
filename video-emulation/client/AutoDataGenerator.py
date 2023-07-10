@@ -7,7 +7,7 @@ import random
 import paramiko
 import select
 from threading import Thread
-import requests
+import requests, json
 # import client_restartPlayer
 if __name__ == "__main__" or __name__ == "AutoDataGenerator":
 	import clientConfig
@@ -41,9 +41,9 @@ class AutoDataGeneratorOptions:
 		self.CSERVER_URL = "http://143.248.57.162:8888" # static URL
 		self.RSERVER_URL = "http://192.168.122.1:8889"
 		self.BUFFER_TIME = 4 # unit is second
-		self.IS_ABR = "false" # "true" or "false", false means use rl quality
+		self.IS_ABR = "true" # "true" or "false", false means use rl quality
 		self.QUALITY_QUERY_INTERVAL = 2000 # unit is milisecond
-		self.ABR_STRATEGY = "Dynamic" # or "Dynamic" | "BOLA" | "L2A" | "LoLP" | "Throughput"
+		self.ABR_STRATEGY = "Throughput" # or "Dynamic" | "BOLA" | "L2A" | "LoLP" | "Throughput"
 		self.WIDTH = None
 		self.HEIGHT = None
 
@@ -148,7 +148,7 @@ def close_server():
 	print(log_string("Server closed"))
 
 def collectDataset(episode_num, remoteHostHandler, options:AutoDataGeneratorOptions, update=True):
-	print(log_string(f'Firstly check VoD capacity'))
+	# print(log_string(f'Firstly check VoD capacity'))
 	print(log_string(f'Total number of Players is {options.NUM_OF_TOTAL_PLAYER}'))
 	print(log_string(f'Num of Players in local host is {options.NUM_Of_PLAYER}'))
 	print(log_string(f'Num of Players in remote host is {options.NUM_OF_TOTAL_PLAYER - options.NUM_Of_PLAYER}'))
@@ -279,7 +279,7 @@ def runPlayers(shList, htmlList, options:AutoDataGeneratorOptions, remoteHostHan
 					stop_client_thread = Thread(target=stopClient, args=(IP_LIST[c], options.LOCAL_MAX_PLAYER_PER_CLIENT, htmlList,))
 					print('\033[95m'+f'stop client!: {IP_LIST[c]} at time {i + incomingTime + wait_time}'+'\033[0m')
 				else:
-					stop_client_thread = Thread(target=stopRemoteClient, args=(remoteIPList[c-local_cListLen], remoteHostHandler,))
+					stop_client_thread = Thread(target=stopRemoteClient, args=(remoteIPList[c-local_cListLen], remoteHostHandler, True,))
 					print('\033[95m'+f'stop client!: {remoteIPList[c-local_cListLen]} at time {i + incomingTime + wait_time}'+'\033[0m')
 				stop_client_thread.start()
 				stop_client_threads.append(stop_client_thread)		
@@ -304,8 +304,17 @@ def startRemoteClient(clientIP, remoteHostHandler):
 def startClient(clientIP, shList):
 	player_generator.runPlayers(clientIP, shList)
 
-def stopRemoteClient(clientIP, remoteHostHandler):
+def stopRemoteClient(clientIP, remoteHostHandler, runningCall=False):
 	remoteHostHandler.stopRemotePlayers(clientIP)
+
+	if runningCall:
+		index = int(clientIP.split('.')[-1])
+		ip = player_generator.createVirtualIP(index - 21)
+
+		url = 'http://192.168.0.104:8888/disconnect'
+		data = {}
+		data['client_ip'] = ip
+		requests.post(url, data=json.dumps(data))
 
 def stopClient(clientIP, MAX_PLAYER_PER_CLIENT, htmlList):
 	head_ip_index = IP_LIST.index(clientIP)
@@ -364,10 +373,10 @@ if __name__ == "__main__":
 		terminatePlayers(options, remoteHostHandler)
 		exit()
 
-	update = False
+	update = True
 
 	if args.update:
-		update = True
+		update = False
 
 	options = AutoDataGeneratorOptions()
 	remoteHostHandler = remoteHostHandler.RemoteHostHandler()
@@ -377,7 +386,7 @@ if __name__ == "__main__":
 	# 	remoteHostHandler.writeRemotePlayerScript()
 
 	try:
-		update = False
+		# update = True
 		options.BUFFER_TIME = 4
 		if update:
 			remoteHostHandler.setOptions(options)

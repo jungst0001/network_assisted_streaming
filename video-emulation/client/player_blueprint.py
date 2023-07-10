@@ -49,7 +49,7 @@ class Script:
 		self.ip = ip
 		self.width = width
 		self.height = height
-		self.plan = 2
+		self.plan = plan
 
 		if abr_strategy == "BOLA":
 			self.strategy = "abrBola"
@@ -216,6 +216,7 @@ class Script:
 			
 			var client_ip = "%s";
 			var cserver_url = "%s";
+			var buffer_time = %d;
 			video = document.querySelector("video");
 			player = dashjs.MediaPlayer().create();
 
@@ -227,7 +228,10 @@ class Script:
 
 			player.updateSettings({
 				streaming: {
-					stableBufferTime: %d,
+					stableBufferTime: buffer_time,
+					richBufferThreshold: buffer_time,
+					bufferTimeAtTopQuality: buffer_time,
+					minBufferTimeFastSwitch: buffer_time,
 					fastSwitchEnabled: true,
 					abr: {
 						ABRStrategy: "%s",
@@ -261,7 +265,7 @@ class Script:
 
 			player.on(dashjs.MediaPlayer.events["FRAGMENT_LOADING_COMPLETED"], function (e) {
 				request_endTime = new Date();
-				server_latency = request_endTime - requeststartTime; 
+				server_latency = request_endTime - request_startTime; 
 				postHandler(player, video, e, client_ip, cserver_url, isStalling, 
 					eventInterval, chunk_skip_event, server_latency, isMaster);
 				isStalling = false;
@@ -353,7 +357,8 @@ def makeScript(option:ScriptOption):
 		option.strategy,
 		option.ip,
 		option.width,
-		option.height)
+		option.height,
+		option.plan)
 
 def main():
 	# print(blue_intro)

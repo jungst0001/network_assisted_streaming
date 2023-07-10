@@ -36,16 +36,22 @@ BPS_800 = '_800_dashinit.mp4'
 BPS_1200 = '_1400_dashinit.mp4'
 BPS_1600 = '_2000_dashinit.mp4'
 
+# Video Server
+vserver_IP = '143.248.55.58'
+vserver_PORT = 22222
+vserver_USER = 'wins'
+vserver_PASSWORD = 'winslab'
+
+dataset_index = 1 # 0: fcc, 1: belgium
+
 # Video url
 video_proxy_server = 'http://143.248.57.162/'
-video_index = 0
+video_index = 1
 video_list = [
 	'dash/BigBuckBunny/2sec/2sec_mod_BigBuckBunny.mpd',
 	'dash/RedBullPlayStreets/2sec/2sec_mod_RedBull.mpd',
 	'dash/ElephantsDream/2sec/2sec_mod_ElephantsDream.mpd',
-	'dash/TearsOfSteel/2sec/2sec_mod_TearsOfSteel.mpd',
-	'dash/TheSwissAccount/2sec/2sec_mod_TheSwissAccount.mpd',
-	'dash/Valkaama/2sec/2sec_mod_Valkaama.mpd'
+	'dash/TheSwissAccount/2sec/2sec_mod_TheSwissAccount.mpd'
 ]
 chunk_key_list = [
 	'BigBuckBunny_2s{Number}.m4s',

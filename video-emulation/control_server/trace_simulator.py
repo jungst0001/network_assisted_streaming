@@ -11,17 +11,14 @@ MBITS_IN_BITS = 1000000.0
 MBITS_TO_KBITS = 1000.0
 MILLISECONDS_IN_SECONDS = 1000.0
 N = 100
-LTE_LINK_FILE = './belgium/logs/report_foot_0004.log'
+LTE_LINK_FILE = './belgium/logs/report_foot_0001.log'
 FCC_LINK_FILE = './fcc/cooked/trace_4529613_https---www.youtube.com'
 tc_command = 'tc.sh'
 
-lte_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
-lte_ADJUST_MAX = 15 * MBITS_TO_KBITS # Kbps
+ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
+ADJUST_MAX = 6 * MBITS_TO_KBITS # Kbps
 
-fcc_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
-fcc_ADJUST_MAX = 9 * MBITS_TO_KBITS # Kbps
-
-HOST_Scale = 1/1
+HOST_Scale = 1/80
 password = 'winslab'
 
 def load_lte():
@@ -43,7 +40,7 @@ def load_lte():
 	time_ms = time_ms / MILLISECONDS_IN_SECONDS
 	throughput_all = throughput_all * BITS_IN_BYTE / MBITS_IN_BITS * MILLISECONDS_IN_SECONDS * MBITS_TO_KBITS
 
-	throughput_all = adjust_throghput(throughput_all, lte_ADJUST_MIN, lte_ADJUST_MAX)
+	throughput_all = adjust_throghput(throughput_all)
 
 	return throughput_all, time_ms
 
@@ -59,16 +56,16 @@ def load_fcc():
 
 	time_all = np.array(range(len(bandwidth_all))) * TIME_INTERVAL
 
-	bandwidth_all = adjust_throghput(bandwidth_all, fcc_ADJUST_MIN, fcc_ADJUST_MAX)
+	bandwidth_all = adjust_throghput(bandwidth_all)
 
 	return bandwidth_all, time_all
 
-def adjust_throghput(bandwidth_all, adj_min, adj_max):
+def adjust_throghput(bandwidth_all):
 	b_min = bandwidth_all.min()
 	b_max = bandwidth_all.max()
 
 	adj_bandwidth_all = ((bandwidth_all - b_min) / (b_max - b_min)) *\
-		(adj_max - adj_min) + adj_min
+		(ADJUST_MAX - ADJUST_MIN) + ADJUST_MIN
 
 	return adj_bandwidth_all
 
@@ -80,23 +77,17 @@ def set_tc(throughput):
 	p.stdin.flush()
 	prompt = p.communicate()
 
-	print(f'vserver: start tc with bandwidth: {math.ceil(throughput)}Kbit')
+	print(f'start tc with bandwidth: {math.ceil(throughput)}Kbit')
 
 def change_tc(throughput):
 	cmd = f'sudo sh tc.sh change {math.ceil(throughput*HOST_Scale)}Kbit'
 	out = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
 
-	print(f'vserver: change tc with bandwidth: {math.ceil(throughput)}Kbit')
+	print(f'change tc with bandwidth: {math.ceil(throughput)}Kbit')
 
 def stop_tc():
 	cmd = f'sudo sh tc.sh stop'
-	# out = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-
-	p = subprocess.Popen(['sudo', '-S', 'sh', 'tc.sh', 'stop'], 
-		stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
-	p.stdin.write('winslab\n')
-	p.stdin.flush()
-	prompt = p.communicate()
+	out = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
 
 	print(f'stop tc')
 
@@ -107,27 +98,18 @@ def shuffle_throughput(throughpt_all):
 
 def traffic_shaping(throughpt_all, granularity=1):
 	bandwidth_i = 0
-
-	# print(throughpt_all)
-
-	if throughpt_all[bandwidth_i] == 0:
-		throughpt_all[bandwidth_i] = 1
-
 	set_tc(throughpt_all[bandwidth_i])
 	try:
 		while True:
 			time.sleep(granularity) # default: 1sec
 			bandwidth_i += 1
-
-			if throughpt_all[bandwidth_i] == 0:
-				throughpt_all[bandwidth_i] = 1
-
 			change_tc(throughpt_all[bandwidth_i])
 
 			# print(fcc_bandwidth[bandwidth_i])
 			# print(lte_throughput[bandwidth_i])
 	finally:
 		stop_tc()
+
 
 def test():
 	lte_throughput, _ = load_lte()
@@ -156,13 +138,7 @@ def test():
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-d', '--dataset', dest='dataset', help='select dataset', type=int, default=None)
-	parser.add_argument('-t', '--terminate', dest='terminate', help='stop tc', action="store_true")
 	args = parser.parse_args()
-
-	if args.terminate:
-		stop_tc()
-		
-		exit()
 
 	if args.dataset == None:
 		print(f'select dataset number, fcc:0, belgium:1')

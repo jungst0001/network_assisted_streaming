@@ -96,9 +96,12 @@ class ClientData:
 		self.pqList = []
 
 		# check Timer
-		self._interval = 10
+		self._interval = 300
 		self._timer = ClientTimer(self._interval, self._setTimer, self.ip)
 		self._timer.run()
+
+		# debug
+		self._index = 0
 
 	def getTimer(self):
 		return self._timer
@@ -115,6 +118,8 @@ class ClientData:
 		return self._initTime
 
 	def getClientLiveTime(self):
+		if self._endTime == 0:
+			self._endTime = datetime.now()
 		liveTime = self._endTime - self._initTime
 		return liveTime
 
@@ -213,7 +218,6 @@ class ClientData:
 			image = imageData["image"]
 
 			if image == 0:
-				print(f'{self._log} {self.ip} this is slave : {self.isMaster}')
 				self.rtm.pqLock.acquire()
 				self.pqList.append((frameNumber, 0))
 				self.rtm.pqLock.release()
@@ -267,7 +271,7 @@ class ClientData:
 					print(f'{self._log} -> initURL {initURL}')
 					print(f'{self._log} -> chunkURL {chunkURL}')
 					print(f'{self._log} -> with frame number: {frameNumber}')
-					print(traceback.format_exc())
+					# print(traceback.format_exc())
 					if _DEBUG:
 						print(f'{self._log} the client {self.ip} gmsd is not calculated')
 					pass
@@ -299,6 +303,9 @@ class ClientData:
 	def getSubscriptionPlan(self):
 		return self._plan
 
+	def setDisconnected(self):
+		self._isDisconnected = True
+
 	def isDisconnected(self):
 		return self._isDisconnected
 
@@ -329,7 +336,7 @@ class ClientData:
 	def _saveSubscriptionPlan(self, data):
 		self._plan = data['plan']
 
-		print(f'{self._log} | {self.ip} subscription plan: {SubscriptionPlan(self._plan).name}')
+		# print(f'{self._log} | {self.ip} subscription plan: {SubscriptionPlan(self._plan).name}')
 
 	def _saveScreenResolutionAndPlan(self, data):
 		# save Screen resolution
@@ -368,6 +375,9 @@ class ClientData:
 
 		# if _DEBUG:
 		# 	print(f'{self._log} request start')
+
+		# print(f'{self._log} | [DEBUG] {self.ip} message: {self._index + 1}')
+		self._index += 1 
 
 		self.rtm.requestThreadList.append(requestThread)
 		requestThread.daemon = True
@@ -415,7 +425,7 @@ class ClientData:
 		else:
 			framerate = data['framerate'].split('/')
 			if len(framerate) == 1:
-				framerate = data['framerate']
+				framerate = float(framerate[0])
 			else:
 				framerate = float(framerate[0]) / float(framerate[1])
 

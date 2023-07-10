@@ -46,6 +46,7 @@ class Cluster:
 	def setMaster(self):
 		if len(self._currClients) >= 1:
 			self._currClients[0].isMaster = True
+			print(f'{self._log} | [INFO] {self._currClients[0].ip} is master')
 
 if __name__ == "__main__":
 	LOG = '[cluster.py main]'

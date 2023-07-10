@@ -31,9 +31,14 @@ class ControlServerHandler:
 		# cluster management section
 		self._clusters = {}
 		for ca in ClusterAttribute:
-			for 
-			cluster = Cluster(ca.name)
-			self._clusters[ca.name] = cluster
+			self._clusters[ca.name] = {}
+			for plan in SubscriptionPlan:
+				if ca.name == 'HD' and plan.name == 'Premium':
+					continue
+				elif ca.name == 'SD' and (plan.name == 'Premium' or plan.name == 'Standard'):
+					continue
+				cluster = Cluster(ca.name, plan.name)
+				self._clusters[ca.name][plan.name] = cluster
 
 		# file name
 		self.filename = self._serverInitTime.strftime('%y%m%d_%H%M%S.csv')
@@ -69,7 +74,7 @@ class ControlServerHandler:
 
 	def setCluster(self, client):
 		cluster = self._clusters[client.getAttribute().name][client.getSubscriptionPlan().name]
-		c_currClients = cluster.getCurrentClients().
+		c_currClients = cluster.getCurrentClients()
 		c_currClients.append(client)
 
 		if len(c_currClients) == 1:
@@ -95,7 +100,7 @@ class ControlServerHandler:
 					p.setSubscriptionPlan(SubscriptionPlan(p.getSubscriptionPlan()))
 
 					if _DEBUG:
-						print(f'{self._log} client clustering: {p.ip} -> {p.getAttribute()}')
+						print(f'{self._log} client clustering: {p.ip} -> {p.getAttribute().name} {p.getSubscriptionPlan().name}')
 
 					self.setCluster(p)
 
@@ -104,7 +109,8 @@ class ControlServerHandler:
 				self._clusters[p.getAttribute().name][p.getSubscriptionPlan().name].disconnectClient(p)
 				self._disconnPlayers.append(p)
 				p.getTimer().cancel()
-				print(f'{self._log} | player {p.ip} is disconnected')
+				p.setClientEndTime(datetime.now())
+				print(f'{self._log} | client {p.ip} is disconnected')
 		
 		self._checkPlayerTimer.cancel()
 		self._checkPlayerTimer = Timer(self._checkInterval, self._checkClients)
@@ -205,6 +211,11 @@ class ControlServerHandler:
 		for i in range(len(metrics)-1):
 			f.write(f'{metrics[i]["throughput"]},')
 		f.write(f'{metrics[-1]["throughput"]}\n')
+
+		f.write(f'Bandwidth (KB/s),')
+		for i in range(len(metrics)-1):
+			f.write(f'{metrics[i]["bandwidth"]},')
+		f.write(f'{metrics[-1]["bandwidth"]}\n')
 
 		f.write(f'CPU Usage Percent,')
 		for i in range(len(metrics)-1):
@@ -372,3 +383,7 @@ class ControlServerHandler:
 			f.write(f'Total Bitrate Switch,{total_bitrateSwitch}\n')
 			f.write(f'Total Stalling Event, {total_stalling}\n')
 			f.write(f'\n')
+
+			print(f'Avg GMSD,{avg_GMSD}\n')
+			print(f'Total Bitrate Switch,{total_bitrateSwitch}\n')
+			print(f'Total Stalling Event, {total_stalling}\n')

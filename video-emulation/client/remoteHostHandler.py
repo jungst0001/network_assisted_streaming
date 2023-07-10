@@ -37,6 +37,7 @@ class RemoteHostHandler:
 		self.resol_plan_ratio = np.array(self.resol_plan_ratio)
 
 		for rhd in self.rhdList:
+			rhd.assignedPlayerNum = len(rhd.clientIPList)
 			rhd.sshManager = fileUpload.SSHManager()
 			print(f'{self._LOG} init rhd: {rhd}')
 			rhd.sshManager.create_ssh_client(rhd.remoteHost_IP,
@@ -69,16 +70,23 @@ class RemoteHostHandler:
 		# print(f'{self._LOG} | _getPlayerAttributeInfo()')
 		player_attribute_info = []
 
+		client_num_list = []
+
 		if np.sum(self.resol_plan_ratio) != maxPlayerNum:
 			print(f'resolutionxplan summation is not equal to number of clients')
 			print(f'you must edit player ratio in remoteHostClientConfig.py')
 			print(f'program is forlcy terminated')
 
+			print(f'resolXplan sum: {np.sum(self.resol_plan_ratio)}, Max remote client: {maxPlayerNum}')
+
 			exit()
 
 		for i in range(self.resol_plan_ratio.shape[0]):
 			for j in range(self.resol_plan_ratio.shape[1]):
-				player_attribute_info.append((i, remoteHostClientConfig.RESOLUTION[j]))
+				for num in range(self.resol_plan_ratio[i][j]):
+					player_attribute_info.append((i + 1, remoteHostClientConfig.RESOLUTION[j]))
+
+		# print(f'{self._LOG} | player attribute info: {player_attribute_info}')
 
 		return player_attribute_info
 
@@ -94,6 +102,8 @@ class RemoteHostHandler:
 		scriptOption.width = attribute_info[1][0]
 		scriptOption.height = attribute_info[1][1]
 		scriptOption.plan = attribute_info[0]
+
+		# print(f'{self._LOG} | client {ip} attribute_info: {attribute_info}')
 
 		sh_filename, html_filename = player_script_maker.writePlayer(scriptOption, filename)
 
@@ -124,11 +134,11 @@ class RemoteHostHandler:
 	def writeRemotePlayerScript(self):
 		currentPlayerNum = self.options.NUM_Of_PLAYER
 		remainPlayerNum = self.options.REMOTE_NUM_OF_PLAYER
-		maxPlayerNum = self.options.REMOTE_MAX_PLAYER_PER_CLIENT
+		maxPlayerPerNum = self.options.REMOTE_MAX_PLAYER_PER_CLIENT
 
-		print(f'remote buffer time: {self.options.BUFFER_TIME}')
+		# print(f'remote buffer time: {self.options.BUFFER_TIME}')
 
-		attribute_info = self._getPlayerAttributeInfo(maxPlayerNum)
+		attribute_info = self._getPlayerAttributeInfo(remainPlayerNum)
 
 		for rhd in self.rhdList:
 			for i in range(currentPlayerNum, currentPlayerNum + rhd.assignedPlayerNum): 
@@ -142,7 +152,7 @@ class RemoteHostHandler:
 				rhd.shFileList.append(sh_filename)
 
 			if rhd.assignedPlayerNum != 0:
-				self._writeRemoteOptions(rhd, maxPlayerNum)
+				self._writeRemoteOptions(rhd, maxPlayerPerNum)
 			currentPlayerNum = currentPlayerNum + rhd.assignedPlayerNum
 
 	def _updateRemoteOptions(self, remoteHostData):
@@ -220,11 +230,11 @@ def main():
 	rh = RemoteHostHandler()
 	rh.setOptions(options)
 
-	print(rh._getScreenResolutionListForRatio())
+	# print(rh._getScreenResolutionListForRatio())
 	
 	# rh.updateRemoteJSFile()
-	# rh.updateRemoteSHFile()
-	# rh.updateRemoteHTMLFile()
+	rh.updateRemoteSHFile()
+	rh.updateRemoteHTMLFile()
 
 if __name__ == '__main__':
 	main()
