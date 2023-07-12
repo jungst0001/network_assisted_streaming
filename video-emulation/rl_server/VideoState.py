@@ -9,20 +9,22 @@ import estimateGMSD
 import rlserverConfig
 
 SERVER_CAPACITY = rlserverConfig.SERVER_CAPACITY #Mbit/s
-MAX_CLIENT_NUM = rlserverConfig.rl_client_num
+# MAX_CLIENT_NUM = rlserverConfig.rl_client_num
+MAX_CLIENT_NUM = 25
 
 class VideoState:
     def __init__(self, MAX_CLIENT_NUM=MAX_CLIENT_NUM, capacity=SERVER_CAPACITY, 
-        use_gmsd_estimation=False, subDir=None, preprocessing=True):
+        use_gmsd_estimation=False, subDir=None, preprocessing=False):
         self._log = "[VideoState]"
 
         # self._subDir = 'ST-DYN/1000Mbit/'
         if subDir is not None:
             self._subDir = subDir
         else:
-            self._subDir = 'ST-DYN/300Mbit/'
+            self._subDir = 'demo'
 
-        self._subDir_buff = ['Bf15', 'Bf30', 'Bf45', 'Bf60']
+        # self._subDir_buff = ['Bf15', 'Bf30', 'Bf45', 'Bf60']
+        self.net_abr_pair = [('FCC', 'Rate'), ('4G', 'Rate'), ('FCC', 'BOLA'), ('4G', 'BOLA')]
 
         self.MAX_CLIENT_NUM = MAX_CLIENT_NUM
 
@@ -39,21 +41,24 @@ class VideoState:
                 pass
 
         # server side state
-        self.server_capacity = capacity * 1024 # Mbit to kbit
+        # self.server_capacity = capacity * 1024 # Mbit to kbit
+        self.server_bandwidth = []
         self.server_throughput = []
         self.server_connected_player = []
         self.server_live_time = []
 
         # client side state
         self.client_bitrate = []
-        self.client_bufferLevel = []
+        # self.client_bufferLevel = []
         self.client_GMSD = []
         # self.client_player_resolution = [] # only insert player height
 
         self.client_throughput = []
 
         # client QoE problem
+        self.client_latency = []
         self.client_stalling = []
+        self.client_chunkSkip = []
         self.client_bitrate_switching = []
         ################################
 
@@ -74,16 +79,16 @@ class VideoState:
         clientNumErrorList = []
         self.isTimeError = False
 
-        for bf in self._subDir_buff:
-            for filename in file_list[bf]:
+        for net, abr in self.net_abr_pair:
+            for filename in file_list[net][abr]:
                 try:
                     state = (ServerState(), []) # serverState, clientStates(list)
 
-                    self._readObservation(state, int(bf[-2:]), filename, subDir=self._subDir)
+                    self._readObservation(state, (net, abr), filename, subDir=self._subDir)
 
                     if len(state[1]) != self.MAX_CLIENT_NUM:
                         # print(f'{self._log} clientnum error, client num: {len(state[1])}')
-                        clientNumErrorList.append((filename[-22:], bf))
+                        clientNumErrorList.append((filename[-20:], (net, abr)))
                         del self.states[-1]
                         del self.states_raw[-1]
 
@@ -100,12 +105,12 @@ class VideoState:
 
                 except Exception as err:
                     if self.isTimeError:
-                        timeErrorList.append((filename[-22:], bf))
+                        timeErrorList.append((filename[-20:], (net, abr)))
                         self.isTimeError = False
                         continue
 
-                    print(f'{self._log} Error occurs when processing: {filename[-22:]}')
-                    self.errorList.append((filename[-22:], bf))
+                    print(f'{self._log} Error occurs when processing: {filename[-20:]}')
+                    self.errorList.append((filename[-20:], (net, abr)))
                     print(traceback.format_exc())
                     isError =True
 
@@ -118,7 +123,7 @@ class VideoState:
         self._printError(clientNumErrorList, timeErrorList)
             # exit(0)
 
-        self.printStatistics()
+        # self.printStatistics()
 
         if preprocessing is True:
             print(f'{self._log} Completed data preprocessing')
@@ -126,57 +131,78 @@ class VideoState:
     def getClientStatistic(self):
         # initiation
         clientStatistic = {}
-        for bf in self._subDir_buff:
-            clientStatistic[bf] = {}
-            clientStatistic[bf]['bitrate'] = []
-            clientStatistic[bf]['GMSD'] = []
-            clientStatistic[bf]['bitrateSwitch'] = []
-            clientStatistic[bf]['stalling'] = []
-            clientStatistic[bf]['stallingTime'] = []
-            clientStatistic[bf]['bufferLevel'] = []
-            clientStatistic[bf]['throughput'] = []
-            clientStatistic[bf]['startupDelay'] = []
-            clientStatistic[bf]['fnum'] = 0
+
+        for net, abr in self.net_abr_pair:
+            if clientStatistic.get(net) is None:
+                clientStatistic[net] = {}
+                clientStatistic[net][abr] = {}
+                continue
+
+            if clientStatistic[net].get(abr) is None:
+                clientStatistic[net][abr] = {}
+                continue
+
+        for net, abr in self.net_abr_pair:
+            clientStatistic[net][abr]['bitrate'] = []
+            clientStatistic[net][abr]['GMSD'] = []
+            clientStatistic[net][abr]['bitrateSwitch'] = []
+            clientStatistic[net][abr]['stalling'] = []
+            clientStatistic[net][abr]['totalStallingEvent'] = []
+            clientStatistic[net][abr]['chunkSkip'] = []
+            clientStatistic[net][abr]['totalChunkSkipEvent'] = []
+            clientStatistic[net][abr]['bufferLevel'] = []
+            clientStatistic[net][abr]['throughput'] = []
+            clientStatistic[net][abr]['latency'] = []
+            clientStatistic[net][abr]['fnum'] = 0
         
         for state in self.states:
             css = state[1]
             bf = None
             for cs in css:
-                bf = 'Bf' + f'{cs.MAX_BUFFER_LEVEL}'
-                clientStatistic[bf]['bitrate'].extend(cs.bitrate)
-                clientStatistic[bf]['GMSD'].extend(cs.GMSD)
-                clientStatistic[bf]['bitrateSwitch'].extend(cs.bitrateSwitch)
-                clientStatistic[bf]['stalling'].extend(cs.stalling)
-                clientStatistic[bf]['stallingTime'].extend(cs.stallingTime)
-                clientStatistic[bf]['bufferLevel'].extend(cs.bufferLevel)
-                clientStatistic[bf]['throughput'].extend(cs.throughput)
-                clientStatistic[bf]['startupDelay'].append(cs.startupDelay)
-            clientStatistic[bf]['fnum'] += 1
+                # bf = 'Bf' + f'{cs.MAX_BUFFER_LEVEL}'
+                net = cs.net
+                abr = cs.abr
+
+                clientStatistic[net][abr]['bitrate'].extend(cs.bitrate)
+                clientStatistic[net][abr]['GMSD'].extend(cs.GMSD)
+                clientStatistic[net][abr]['bitrateSwitch'].extend(cs.bitrateSwitch)
+                clientStatistic[net][abr]['stalling'].extend(cs.stalling)
+                clientStatistic[net][abr]['totalStallingEvent'].extend(cs.totalStallingEvent)
+                clientStatistic[net][abr]['chunkSkip'].extend(cs.chunkSkip)
+                clientStatistic[net][abr]['totalChunkSkipEvent'].extend(cs.totalChunkSkipEvent)
+                clientStatistic[net][abr]['latency'].extend(cs.latency)
+                clientStatistic[net][abr]['throughput'].extend(cs.throughput)
+                # clientStatistic[net][abr]['startupDelay'].append(cs.startupDelay)
+            clientStatistic[net][abr]['fnum'] += 1
 
         return clientStatistic
 
     def printClientStatistic(self, clientStatistic):
-        for bf in self._subDir_buff:
-            clientStatistic[bf]['bitrate'] = np.array(clientStatistic[bf]['bitrate'])
-            clientStatistic[bf]['GMSD'] = np.array(clientStatistic[bf]['GMSD'])
-            clientStatistic[bf]['bitrateSwitch'] = np.array(clientStatistic[bf]['bitrateSwitch'])
-            clientStatistic[bf]['stalling'] = np.array(clientStatistic[bf]['stalling'])
-            clientStatistic[bf]['stallingTime'] = np.array(clientStatistic[bf]['stallingTime'])
-            clientStatistic[bf]['bufferLevel'] = np.array(clientStatistic[bf]['bufferLevel'])
-            clientStatistic[bf]['throughput'] = np.array(clientStatistic[bf]['throughput'])
-            clientStatistic[bf]['startupDelay'] = np.array(clientStatistic[bf]['startupDelay'])
+        for net, abr in self.net_abr_pair:
+            clientStatistic[net][abr]['bitrate'] = np.array(clientStatistic[net][abr]['bitrate'])
+            clientStatistic[net][abr]['GMSD'] = np.array(clientStatistic[net][abr]['GMSD'])
+            clientStatistic[net][abr]['bitrateSwitch'] = np.array(clientStatistic[net][abr]['bitrateSwitch'])
+            clientStatistic[net][abr]['stalling'] = np.array(clientStatistic[net][abr]['stalling'])
+            clientStatistic[net][abr]['totalStallingEvent'] = np.array(clientStatistic[net][abr]['totalStallingEvent'])
+            clientStatistic[net][abr]['chunkSkip'] = np.array(clientStatistic[net][abr]['chunkSkip'])
+            clientStatistic[net][abr]['totalChunkSkipEvent'] = np.array(clientStatistic[net][abr]['totalChunkSkipEvent'])
+            clientStatistic[net][abr]['latency'] = np.array(clientStatistic[net][abr]['latency'])
+            clientStatistic[net][abr]['throughput'] = np.array(clientStatistic[net][abr]['throughput'])
+            # clientStatistic[net][abr]['startupDelay'] = np.array(clientStatistic[net][abr]['startupDelay'])
 
-            clientStatistic[bf]['GMSD'] = clientStatistic[bf]['GMSD'].astype('float')
-            clientStatistic[bf]['GMSD'][clientStatistic[bf]['GMSD'] == 0.7] = np.nan
+            clientStatistic[net][abr]['GMSD'] = clientStatistic[net][abr]['GMSD'].astype('float')
+            clientStatistic[net][abr]['GMSD'][clientStatistic[net][abr]['GMSD'] == 0.7] = np.nan
 
-            print(f'========bf: {bf}')
-            print(f'avg bitrate: {np.round(np.mean(clientStatistic[bf]["bitrate"]), 2)}')
-            print(f'avg GMSD: {np.round(np.nanmean(clientStatistic[bf]["GMSD"]), 5)}')
-            print(f'avg bufferLevel: {np.round(np.mean(clientStatistic[bf]["bufferLevel"]), 2)}')
-            print(f'avg stalling: {np.round(np.sum(clientStatistic[bf]["stalling"]) / clientStatistic[bf]["fnum"], 4)}')
-            print(f'total stalling: {np.sum(clientStatistic[bf]["stalling"])}')
-            print(f'avg bitrateSwitch: {np.round(np.sum(clientStatistic[bf]["bitrateSwitch"]) / clientStatistic[bf]["fnum"], 4)}')
-            print(f'total bitrateSwitch: {np.sum(clientStatistic[bf]["bitrateSwitch"])}')
+            print(f'========{net}-{abr}')
+            print(f'avg bitrate: {np.round(np.mean(clientStatistic[net][abr]["bitrate"]), 2)}')
+            print(f'avg GMSD: {np.round(np.nanmean(clientStatistic[net][abr]["GMSD"]), 5)}')
+            print(f'avg latency: {np.round(np.mean(clientStatistic[net][abr]["latency"]), 2)}')
+            print(f'avg stalling: {np.round(np.sum(clientStatistic[net][abr]["stalling"]) / (clientStatistic[net][abr]["fnum"] * self.MAX_CLIENT_NUM), 4)}')
+            print(f'total stalling: {np.sum(clientStatistic[net][abr]["stalling"])}')
+            print(f'avg chunkSkip: {np.round(np.sum(clientStatistic[net][abr]["chunkSkip"]) / (clientStatistic[net][abr]["fnum"] * self.MAX_CLIENT_NUM), 4)}')
+            print(f'total chunkSkip: {np.sum(clientStatistic[net][abr]["chunkSkip"])}')
+            print(f'avg bitrateSwitch: {np.round(np.sum(clientStatistic[net][abr]["bitrateSwitch"]) / (clientStatistic[net][abr]["fnum"] * self.MAX_CLIENT_NUM), 4)}')
+            print(f'total bitrateSwitch: {np.sum(clientStatistic[net][abr]["bitrateSwitch"])}')
             print(f'========')
 
     def getEstimatedGMSD(self, variable):
@@ -220,31 +246,36 @@ class VideoState:
             print(f'file names: {[clientNum[0] for clientNum in clientNumErrorList]}')
             print(f'Total number of files: {len(clientNumErrorList)}')
             typeList = self._countType(clientNumErrorList)
-            print(f'bf15 num of files: {len(typeList["Bf15"])}')
-            print(f'bf30 num of files: {len(typeList["Bf30"])}')
-            print(f'bf45 num of files: {len(typeList["Bf45"])}')
-            print(f'bf60 num of files: {len(typeList["Bf60"])}')
+
+            for net, abr in self.net_abr_pair:
+                print(f'{net}-{abr} num of files: {len(typeList[net][abr])}')
 
         if len(timeErrorList) != 0:
             print(f'This files have time outlier:')
             print(f'file names: {[timeError[0] for timeError in timeErrorList]}')
             print(f'Total number of files: {len(timeErrorList)}')
             typeList = self._countType(timeErrorList)
-            print(f'bf15 num of files: {len(typeList["Bf15"])}')
-            print(f'bf30 num of files: {len(typeList["Bf30"])}')
-            print(f'bf45 num of files: {len(typeList["Bf45"])}')
-            print(f'bf60 num of files: {len(typeList["Bf60"])}')
+
+            for net, abr in self.net_abr_pair:
+                print(f'{net}-{abr} num of files: {len(typeList[net][abr])}')
 
     def _countType(self, countList):
         typeList = {}
 
-        for df in self._subDir_buff:
-            typeList[df] = []
+        for net, abr in self.net_abr_pair:
+            if typeList.get(net) is None:
+                typeList[net] = {}
+                typeList[net][abr] = []
+                continue
 
-        for df in self._subDir_buff:
+            if typeList[net].get(abr) is None:
+                typeList[net][abr] = []
+                continue
+
+        for net, abr in self.net_abr_pair:
             for cl in countList:
-                if cl[1] in df:
-                    typeList[df].append(cl[0])
+                if net == cl[1][0] and abr == cl[1][1]:
+                    typeList[net][abr].append(cl[0])
 
         return typeList
 
@@ -498,23 +529,44 @@ class VideoState:
             rootDir = ('./DataStorage/' + subDir)
 
         file_list = {}
-        for bf in self._subDir_buff:
-            file_list[bf] = []
+        for net, abr in self.net_abr_pair:
+            if file_list.get(net) is None:
+                file_list[net] = {}
+                file_list[net][abr] = []
+                continue
+
+            if file_list[net].get(abr) is None:
+                file_list[net][abr] = []
+                continue
 
         # print(rootDir)
 
         num = 0
-        for (root, subdirs, files) in os.walk(rootDir):
-            for bf in self._subDir_buff:
-                if bf in root:
-                    file_list[bf].extend([(root + '/' + file) for file in files if file.endswith(".csv")])
+        # for (root, subdirs, files) in os.walk(rootDir):
+        #     for bf in self._subDir_buff:
+        #         if bf in root:
+        #             file_list[bf].extend([(root + '/' + file) for file in files if file.endswith(".csv")])
         
-        for bf in self._subDir_buff:
-            num += len(file_list[bf])
+        # for bf in self._subDir_buff:
+        #     num += len(file_list[bf])
+
+        # print(f'Total num of fileList: {num}')
+
+        for (root, subdirs, files) in os.walk(rootDir):
+            # print(root, files)
+            for net, abr in self.net_abr_pair:
+                if net in root and abr in root:
+                    file_list[net][abr].extend([(root + '/' + file) for file in files if file.endswith(".csv")])
+
+        for net, abr in self.net_abr_pair:
+            num += len(file_list[net][abr])
 
         print(f'Total num of fileList: {num}')
 
         return file_list
+
+    # def _setMaxMinFlaginClientState(self, clientStates):
+    #     for clientState in clientStates:
 
     def _searchClientState(self, clientStates, ip):
         for clientState in clientStates:
@@ -527,7 +579,7 @@ class VideoState:
 
         return cs
 
-    def _readObservation(self, state, max_buffer_level, filename, subDir=None):
+    def _readObservation(self, state, net_abr_pair, filename, subDir=None):
         # if subDir is None:
         #     f = open('DataStorage/' + filename, 'r')
         # else:
@@ -543,10 +595,12 @@ class VideoState:
                 self._readServerInfo(state[0], f)
                 continue
             elif line[0] == "IP":
-                self._readClientInfo(state[1], line[1], f, max_buffer_level)
+                self._readClientInfo(state[1], line[1], f, net_abr_pair)
                 continue
 
         f.close()
+
+        # self._setMaxMinFlaginClientState(state[1])
 
         self.states.append(state)
 
@@ -566,11 +620,17 @@ class VideoState:
                 ss.connected_player = line[1:]
                 ss.connected_player = [int (i) for i in ss.connected_player]
                 continue
-            elif line[0] == "TX + RX (Kbps)": # consider TX + RX
+            elif line[0] == "Throughput (KB/s)":
                 ss.throughput = line[1:]
                 # it is not kbps (KBps * 8). so it is divided by 8
                 # ss.throughput = [round(float (i) / 8, 3) for i in ss.throughput]
                 ss.throughput = [round(float (i), 3) for i in ss.throughput]
+                continue
+            elif line[0] == "Bandwidth (KB/s)":
+                ss.bandwidth = line[1:]
+                # it is not kbps (KBps * 8). so it is divided by 8
+                # ss.throughput = [round(float (i) / 8, 3) for i in ss.throughput]
+                ss.bandwidth = [round(float (i), 3) for i in ss.bandwidth]
                 continue
             elif line[0] == "time":
                 ss.live_time = line[1:]
@@ -579,7 +639,7 @@ class VideoState:
 
         ss.saveServerState()
 
-    def _readClientInfo(self, clientStates, ip, f, max_buffer_level):
+    def _readClientInfo(self, clientStates, ip, f, net_abr_pair):
         cs = self._searchClientState(clientStates, ip)
         if cs is None:
             print(f'{self._log} read file has a problem. pass this file')
@@ -588,7 +648,8 @@ class VideoState:
 
             return
 
-        cs.MAX_BUFFER_LEVEL = max_buffer_level
+        cs.net = net_abr_pair[0]
+        cs.abr = net_abr_pair[1]
 
         while True:
             line = f.readline().split('\n')[0]
@@ -631,25 +692,25 @@ class VideoState:
                 cs.stalling = line[1:]
                 cs.stalling = [int (i) for i in cs.stalling]
                 continue
-            elif line[0] == "stallingTime (sec)":
-                cs.stallingTime = line[1:]
-                cs.stallingTime = [int (i) for i in cs.stallingTime]
+            elif line[0] == "totalStallingEvent":
+                cs.totalStallingEvent = line[1:]
+                cs.totalStallingEvent = [int (i) for i in cs.totalStallingEvent]
                 continue
-            elif line[0] == "bufferLevel":
-                cs.bufferLevel = line[1:]
-                cs.bufferLevel = [float (i) for i in cs.bufferLevel]
-                continue
-            elif line[0] == "startupDelay":
-                cs.startupDelay = line[1:][0]
-                cs.startupDelay = float(cs.startupDelay) / 1000
-                continue
+            # elif line[0] == "bufferLevel":
+            #     cs.bufferLevel = line[1:]
+            #     cs.bufferLevel = [float (i) for i in cs.bufferLevel]
+            #     continue
+            # elif line[0] == "startupDelay":
+            #     cs.startupDelay = line[1:][0]
+            #     cs.startupDelay = float(cs.startupDelay) / 1000
+            #     continue
             elif line[0] == "time":
                 cs.time = line[1:]
                 cs.time = [float (i) for i in cs.time]
-                for i in range(len(cs.time)-1):
-                    if cs.time[i+1] - cs.time[i] > 15:
-                        self.isTimeError = True
-                        raise Exception('client time error when reading csv file')
+                # for i in range(len(cs.time)-1):
+                #     if cs.time[i+1] - cs.time[i] > 15:
+                #         self.isTimeError = True
+                #         raise Exception('client time error when reading csv file')
                 continue
             # elif line[0] == "TX (KBps)":
             #     cs.tx = line[1:]
@@ -659,9 +720,21 @@ class VideoState:
             #     cs.rx = line[1:]
             #     cs.rx = [float (i) for i in cs.rx]
             #     continue
-            elif line[0] == "Throughput (Kbps)":
+            elif line[0] == "Latency":
+                cs.latency = line[1:]
+                cs.latency = [int (i) for i in cs.latency]
+                continue
+            elif line[0] == "chunkSkip":
+                cs.chunkSkip = line[1:]
+                cs.chunkSkip = [int (i) for i in cs.chunkSkip]
+                continue
+            elif line[0] == "totalChunkSkipEvent":
+                cs.totalChunkSkipEvent = line[1:]
+                cs.totalChunkSkipEvent = [int (i) for i in cs.totalChunkSkipEvent]
+                continue
+            elif line[0] == "Throughput (KB/s)":
                 cs.throughput = line[1:]
-                cs.throughput = [int (i) for i in cs.throughput]
+                cs.throughput = [round(float (i), 3) for i in cs.throughput]
                 continue
 
 
@@ -702,8 +775,8 @@ def main():
     # cstat = videoState.getClientStatistic()
     # videoState.printClientStatistic(cstat)
 
-    videoState = VideoState(MAX_CLIENT_NUM=rlserverConfig.rl_client_num, preprocessing=False,
-            subDir=rlserverConfig.subDir_in_DDQN_testing)
+    videoState = VideoState(MAX_CLIENT_NUM=MAX_CLIENT_NUM, preprocessing=False,
+            subDir=None)
 
     cstat = videoState.getClientStatistic()
     videoState.printClientStatistic(cstat)

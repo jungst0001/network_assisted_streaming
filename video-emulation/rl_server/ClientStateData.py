@@ -10,14 +10,27 @@ class ClientState:
         self.player_width = 0
         self.player_height = 0
         self.bitrate = None
-        self.startupDelay = 0
         self.bitrateSwitch = None
         self.stalling = None
-        self.stallingTime = None
-        self.bufferLevel = None
+        self.totalStallingEvent = None
+        self.chunkSkip = None
+        self.totalChunkSkipEvent = None
+        self.latency = None
         self.time = None
 
+        # for categorizing in VideoState.py
         self.MAX_BUFFER_LEVEL = None
+        self.net = None
+        self.abr = None
+
+        # for statistic
+        self.max_chunk_skip = False
+        self.max_stalling_event = False
+        self.max_bitrate_switch = False
+        self.min_chunk_skip = False
+        self.min_stalling_event = False
+        self.min_bitrate_switch = False
+
         self.throughput = None
         self.GMSD = None
 
@@ -34,13 +47,15 @@ class ClientState:
         self.player_width = 0
         self.player_height = 0
         self.bitrate = None
-        self.startupDelay = 0
         self.GMSD = None
         self.bitrateSwitch = None
         self.stalling = None
-        self.stallingTime = None
-        self.bufferLevel = None
+        self.totalStallingEvent = None
+        self.latency = None
         self.time = None
+        self.chunkSkip = None
+        self.totalChunkSkipEvent = None
+        self.latency = None
 
         self.throughput = None
 
@@ -52,8 +67,10 @@ class ClientState:
         data['GMSD'].append(self.GMSD[index])
         data['bitrateSwitch'].append(self.bitrateSwitch[index])
         data['stalling'].append(self.stalling[index])
-        data['stallingTime'].append(self.stallingTime[index])
-        data['bufferLevel'].append(self.bufferLevel[index])
+        data['totalStallingEvent'].append(self.totalStallingEvent[index])
+        data['latency'].append(self.latency[index])
+        data['chunkSkip'].append(self.chunkSkip[index])
+        data['totalChunkSkipEvent'].append(self.totalChunkSkipEvent[index])
         data['throughput'].append(self.throughput[index])
 
     def _saveClientData(self, data):
@@ -62,9 +79,11 @@ class ClientState:
         self.GMSD = data['GMSD']
         self.bitrateSwitch = data['bitrateSwitch']
         self.stalling = data['stalling']
-        self.stallingTime = data['stallingTime']
-        self.bufferLevel = data['bufferLevel']
+        self.totalStallingEvent = data['totalStallingEvent']
+        self.latency = data['latency']
         self.throughput = data['throughput']
+        self.chunkSkip = data['chunkSkip']
+        self.totalChunkSkipEvent = data['totalChunkSkipEvent']
 
     def preprocessClientData(self, server_time_slot):
         s_tslot = server_time_slot
@@ -76,9 +95,11 @@ class ClientState:
         data['GMSD'] = []
         data['bitrateSwitch'] = []
         data['stalling'] = []
-        data['stallingTime'] = []
-        data['bufferLevel'] = [] 
+        data['totalStallingEvent'] = []
+        data['latency'] = [] 
         data['throughput'] = []
+        data['chunkSkip'] = []
+        data['totalChunkSkipEvent'] = []
 
         rounddown_client_time = [math.trunc(i) for i in self.time]
         # print(f'round time: {rounddown_client_time}')
@@ -176,8 +197,8 @@ class ClientState:
             self.GMSD = [0 for i in range(required_length)]
             self.bitrateSwitch = [0 for i in range(required_length)]
             self.stalling = [0 for i in range(required_length)]
-            self.stallingTime = [0 for i in range(required_length)]
-            self.bufferLevel = [0 for i in range(required_length)]
+            self.totalStallingEvent = [0 for i in range(required_length)]
+            self.latency = [0 for i in range(required_length)]
             self.throughput = [0 for i in range(required_length)]
             
             return
@@ -190,8 +211,8 @@ class ClientState:
             self.GMSD.insert(0, 0)
             self.bitrateSwitch.insert(0, 0)
             self.stalling.insert(0, 0)
-            self.stallingTime.insert(0, 0)
-            self.bufferLevel.insert(0, 0)
+            self.totalStallingEvent.insert(0, 0)
+            self.latency.insert(0, 0)
             self.throughput.insert(0, 0)
 
         postpadding = required_length - len(self.bitrate)
@@ -201,8 +222,8 @@ class ClientState:
             self.GMSD.insert(len(self.GMSD), 0)
             self.bitrateSwitch.insert(len(self.bitrateSwitch), 0)
             self.stalling.insert(len(self.stalling), 0)
-            self.stallingTime.insert(len(self.stallingTime), 0)
-            self.bufferLevel.insert(len(self.bufferLevel), 0)
+            self.totalStallingEvent.insert(len(self.totalStallingEvent), 0)
+            self.latency.insert(len(self.latency), 0)
             self.throughput.insert(len(self.throughput), 0)
 
         prunning_end = len(self.bitrate) - required_length
@@ -212,18 +233,20 @@ class ClientState:
                 del self.GMSD[-1]
                 del self.bitrateSwitch[-1]
                 del self.stalling[-1]
-                del self.stallingTime[-1]
-                del self.bufferLevel[-1]
+                del self.totalStallingEvent[-1]
+                del self.latency[-1]
                 del self.throughput[-1]
 
 class ServerState:
     def __init__(self):
         self.connected_player = None
         self.throughput = None
+        self.bandwidth = None
         self.live_time = None
 
         self.raw_connected_player = None
         self.raw_throughput = None
+        self.raw_bandwidth = None
         self.raw_live_time = None
 
         self._isSaved = False
@@ -231,6 +254,7 @@ class ServerState:
     def saveServerState(self):
         self.raw_connected_player = copy.deepcopy(self.connected_player)
         self.raw_throughput = copy.deepcopy(self.throughput)
+        self.raw_bandwidth = copy.deepcopy(self.bandwidth)
         self.raw_live_time = copy.deepcopy(self.live_time)
 
         self._isSaved = True
@@ -238,10 +262,12 @@ class ServerState:
     def resetServerState(self):
         self.connected_player = None
         self.throughput = None
+        self.bandwidth = None
         self.live_time = None
 
         self.raw_connected_player = None
         self.raw_throughput = None
+        self.raw_bandwidth = None
         self.raw_live_time = None
 
         self._isSaved = False
