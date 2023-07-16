@@ -41,7 +41,9 @@ class ControlServerHandler:
 				self._clusters[ca.name][plan.name] = cluster
 
 		# file name
-		self.filename = self._serverInitTime.strftime('%y%m%d_%H%M%S.csv')
+		self._network_traces = ['FCC', '4G']
+		self.filename = self._serverInitTime.strftime('%y%m%d_%H%M%S')
+		self.filename = f'{self.filename}_{self._network_traces[cserverConfig.dataset_index]}_{self._video_index}.csv'
 
 		# handler check tick management
 		self._checkInterval = 1
@@ -76,6 +78,7 @@ class ControlServerHandler:
 		cluster = self._clusters[client.getAttribute().name][client.getSubscriptionPlan().name]
 		c_currClients = cluster.getCurrentClients()
 		c_currClients.append(client)
+		client.mycluster = cluster
 
 		if len(c_currClients) == 1:
 			cluster.setMaster()
@@ -352,6 +355,11 @@ class ControlServerHandler:
 				for i in range(len(metrics)-1):
 					f.write(f'{metrics[i]["latency"]},')
 				f.write(f'{metrics[-1]["latency"]}\n')
+
+				f.write(f'QoE,')
+				for i in range(len(metrics)-1):
+					f.write(f'{metrics[i]["QoE"]},')
+				f.write(f'{metrics[-1]["QoE"]}\n')
 
 				# f.write(f'TX (KBps),')
 				# for i in range(len(metrics)-1):

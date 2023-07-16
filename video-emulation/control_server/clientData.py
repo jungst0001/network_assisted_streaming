@@ -4,7 +4,7 @@ from threading import Timer, Lock, Thread
 import time
 import math
 import base64
-from cluster import ClusterAttribute, SubscriptionPlan, Cluster
+from cluster import ClusterAttribute, SubscriptionPlan, Cluster, WeightedParameter
 from calculateSSIM import getClientSSIM
 from calculateGMSD import getClientGMSD
 from CacheHandler import CacheHandler
@@ -76,7 +76,9 @@ class ClientData:
 		# client streaming info
 		self._attribute = None
 		self._plan = None
+		self.mycluster = None
 		self.isMaster = False
+		self.master_gmsd = 0
 
 		self._qualityIndex = 0
 		self._currentQuality = 0
@@ -110,6 +112,9 @@ class ClientData:
 		self._endTime = datetime.now()
 		self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
 		self._isDisconnected = True
+
+	def setMasterGMSD(self, gmsd):
+		self.master_gmsd = gmsd
 
 	def getClientEndTime(self):
 		return self._endTime
@@ -266,6 +271,8 @@ class ClientData:
 						print(f'{self._log} the client {self.ip} gmsd with frame number: {frameNumber} is calculated: {currentGMSD}')
 
 					self.pqList.append((frameNumber, currentGMSD))
+
+					self.mycluster.setMasterGMSD(currentGMSD)
 				except:
 					print(f'{self._log} {self.ip} chunkMP4 {chunkMP4} has a problem')
 					print(f'{self._log} -> initURL {initURL}')
@@ -388,6 +395,38 @@ class ClientData:
 
 		# if _DEBUG:
 		# 	print(f'{self._log} request over')
+
+	def calculateClientQoE(self, metric):
+		scaled_bitrate = metric['bitrate'] / cserverConfig.max_video_bitrate
+
+		sclaed_latency = metric['latency'] / cserverConfig.video_chunk_size
+		if metric['latency'] > 2:
+			sclaed_latency = 1
+
+		gmsd = metric['GMSD']
+		if gmsd == 0:
+			gmsd = self.master_gmsd
+
+		rebuffering = metric['stalling']
+		bitrate_switch = metric['bitrateSwitch']
+		chunk_skip = metric['chunk_skip']
+		
+		w1 = mycluster.cluster_parameter
+		w2 = WeightedParameter.w2.value
+		w3 = WeightedParameter.w3.value
+		w4 = WeightedParameter.w4.value
+		w5 = WeightedParameter.w5.value
+		w6 = WeightedParameter.w6.value
+
+		# all parameter varies in [0, 1]
+		qoe = w1 * scaled_bitrate + \
+			w2 * gmsd -\
+			w3 * bitrate_switch -\
+			w4 * sclaed_latency -\
+			w5 * rebuffering -\
+			w6 * chunk_skip
+
+		return qoe
 
 	def _getPQvalue(self, frameNumber):
 		pqValue = 0
@@ -548,6 +587,8 @@ class ClientData:
 			else:
 				metric['bitrateSwitch'] = 1
 				print(f'{self._log} | {self.ip} changed bitrate: {metric["bitrate"]}')
+
+		metric['QoE'] = self.calculateClientQoE(metric)
 
 		self.rtm.metricLock.acquire()
 		try:

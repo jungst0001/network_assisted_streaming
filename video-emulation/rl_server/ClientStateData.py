@@ -7,6 +7,9 @@ class ClientState:
 
         self._ip = ip
 
+        self.attribute = None
+        self.plan = None
+
         self.player_width = 0
         self.player_height = 0
         self.bitrate = None
@@ -16,6 +19,7 @@ class ClientState:
         self.chunkSkip = None
         self.totalChunkSkipEvent = None
         self.latency = None
+        self.QoE = None
         self.time = None
 
         # for categorizing in VideoState.py
@@ -56,6 +60,7 @@ class ClientState:
         self.chunkSkip = None
         self.totalChunkSkipEvent = None
         self.latency = None
+        self.QoE = None
 
         self.throughput = None
 
@@ -72,6 +77,7 @@ class ClientState:
         data['chunkSkip'].append(self.chunkSkip[index])
         data['totalChunkSkipEvent'].append(self.totalChunkSkipEvent[index])
         data['throughput'].append(self.throughput[index])
+        data['QoE'].append(self.qoe[index])
 
     def _saveClientData(self, data):
         self.time = data['time']
@@ -84,6 +90,7 @@ class ClientState:
         self.throughput = data['throughput']
         self.chunkSkip = data['chunkSkip']
         self.totalChunkSkipEvent = data['totalChunkSkipEvent']
+        self.QoE = data['QoE']
 
     def preprocessClientData(self, server_time_slot):
         s_tslot = server_time_slot
@@ -100,6 +107,7 @@ class ClientState:
         data['throughput'] = []
         data['chunkSkip'] = []
         data['totalChunkSkipEvent'] = []
+        data['QoE'] = []
 
         rounddown_client_time = [math.trunc(i) for i in self.time]
         # print(f'round time: {rounddown_client_time}')

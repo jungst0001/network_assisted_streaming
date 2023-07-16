@@ -4,6 +4,7 @@ import math
 import copy
 import traceback
 import numpy as np
+from scipy import stats
 from ClientStateData import ClientState, ServerState
 import estimateGMSD
 import rlserverConfig
@@ -176,6 +177,46 @@ class VideoState:
             clientStatistic[net][abr]['fnum'] += 1
 
         return clientStatistic
+
+    def chooseSampleClientState(self, clientStates):
+        ipListInCI = []
+        ciList = {}
+        mean, ci_min, ci_max = self.get_Confidence_Interval(data)
+
+        ciList[bitrate] = bitrate concatination!!
+
+        for cs in clientStates:
+            if self.checkDatainCI(cs.bitrate, ciList[bitrate][0], ciList[bitrate][1], ciList[bitrate][2])
+                pass
+            else:
+                continue
+
+            ipListInCI.append(cs.ip)
+        pass
+
+    def checkDatainCI(self, oneline_data, mean, ci_min, ci_max):
+        if type(oneline_data) != list:
+            if oneline_data > ci_min and oneline_data < ci_max:
+                return True
+            else:
+                return False
+        elif:
+            for a_data in oneline_data:
+                if oneline_data > ci_min and oneline_data < ci_max:
+                    continue
+                else:
+                    return False
+
+    def get_Confidence_Interval(data, confidence = 0.95):
+        data = np.array(data)
+        mean = np.mean(data)
+        n = len(data)
+
+        stderr = stats.sem(data)
+
+        interval = stderr - stats.t.ppf( (1 + confidence) / 2, n-1)
+
+        return mean, mean-interval, mean+interval
 
     def printClientStatistic(self, clientStatistic):
         for net, abr in self.net_abr_pair:
@@ -665,6 +706,12 @@ class VideoState:
                 cs.player_height = line[1:][0]
                 cs.player_height = int(cs.player_height)
                 continue
+            elif line[0] == "Attribute":
+                cs.attribute = line[1:][0].split('.')[1]
+                continue
+            elif line[0] == "Subscription Plan":
+                cs.plan = line[1:][0].split('.')[1]
+                continue
             elif line[0] == "bitrate":
                 cs.bitrate = line[1:]
                 cs.bitrate = [float (i) for i in cs.bitrate]
@@ -720,6 +767,10 @@ class VideoState:
             #     cs.rx = line[1:]
             #     cs.rx = [float (i) for i in cs.rx]
             #     continue
+            elif line[0] == "QoE":
+                cs.QoE = line[1:]
+                cs.QoE = [float (i) for i in cs.QoE]
+                continue
             elif line[0] == "Latency":
                 cs.latency = line[1:]
                 cs.latency = [int (i) for i in cs.latency]

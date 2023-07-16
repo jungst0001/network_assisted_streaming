@@ -42,11 +42,11 @@ vserver_PORT = 22222
 vserver_USER = 'wins'
 vserver_PASSWORD = 'winslab'
 
-dataset_index = 1 # 0: fcc, 1: belgium
+dataset_index = 0 # 0: fcc, 1: belgium
 
 # Video url
 video_proxy_server = 'http://143.248.57.162/'
-video_index = 1
+video_index = 0
 video_list = [
 	'dash/BigBuckBunny/2sec/2sec_mod_BigBuckBunny.mpd',
 	'dash/RedBullPlayStreets/2sec/2sec_mod_RedBull.mpd',
@@ -61,6 +61,9 @@ chunk_key_list = [
 	'TheSwissAccount_2s{Number}.m4s',
 	'Valkaama_2{Number}.m4s'
 ]
+
+max_video_bitrate = 3000.0 #kbps
+video_chunk_size = 2.0 #sec
 
 # Cache Info
 LOCAL_CACHE_DIR = '/home/wins/jin/video_emulation/control_server/cacheStorage/'

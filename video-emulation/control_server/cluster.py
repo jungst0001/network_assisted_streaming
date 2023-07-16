@@ -10,12 +10,33 @@ class ClusterAttribute(Enum):
 	HD = 720
 	SD = 480
 
+class WeightedParameter(Enum):
+	w1 = 1 # bitrate
+	w2 = 1 # gmsd
+	w3 = 1 # bitrate switch
+	w4 = 1 # latency
+	w5 = 1.2 # rebuffering
+	w6 = 1.4 # chunk skip
+
+	cluster_FHD = 1
+	cluster_HD = 1.2
+	cluster_SD = 1.5
+
 class Cluster:
 	def __init__(self, attribute:ClusterAttribute, plan:SubscriptionPlan):
 		self._log = '[Cluster]'
 
 		self.plan = plan
 		self.attribute = attribute
+		self.cluster_parameter = 0
+
+		if attribute.name == 'FHD':
+			self.cluster_parameter = WeightedParameter.cluster_FHD.value
+		elif attribute.name == 'HD':
+			self.cluster_parameter = WeightedParameter.cluster_HD.value
+		elif attribute.name == 'SD':
+			self.cluster_parameter = WeightedParameter.cluster_SD.value
+
 		self._currClients = []
 		self._disconnClients = []
 
@@ -34,6 +55,13 @@ class Cluster:
 
 	def getClusterQualityIndex(self):
 		return self._qualityIndex
+
+	def getUtilityFunction(self):
+		pass
+
+	def setMasterGMSD(self, gmsd):
+		for client in self._currClients:
+			client.setMasterGMSD(gmsd)
 
 	def disconnectClient(self, client):
 		self._currClients.remove(client)
