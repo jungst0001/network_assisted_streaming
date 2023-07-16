@@ -178,21 +178,72 @@ class VideoState:
 
         return clientStatistic
 
-    def chooseSampleClientState(self, clientStates):
-        ipListInCI = []
-        ciList = {}
-        mean, ci_min, ci_max = self.get_Confidence_Interval(data)
-
-        ciList[bitrate] = bitrate concatination!!
+    def distributeClusterInClientState(self, clientStates):
+        cluster = {}
+        cluster['FHD'] = []
+        cluster['HD'] = []
+        cluster['SD'] = []
 
         for cs in clientStates:
-            if self.checkDatainCI(cs.bitrate, ciList[bitrate][0], ciList[bitrate][1], ciList[bitrate][2])
-                pass
-            else:
-                continue
+            if cs.attribute == 'FHD':
+                cluster['FHD'].append(cs)
+            elif cs.attribute == 'HD':
+                cluster['HD'].append(cs)
+            elif cs.attribute == 'SD':
+                cluster['SD'].append(cs)
 
-            ipListInCI.append(cs.ip)
-        pass
+        return cluster
+
+    def chooseSampleClientState(self, clientStates):
+        cluster = self.distributeClusterInClientState(clientStates)
+
+        ipListInCI = {}
+        ciList = {}
+
+        for key in cluster.keys():
+            css = cluster[key]
+            ipListInCI[key] = []
+            ciList[key] = {}
+
+            bitrate = []
+            GMSD = []
+            bitrateSwitch =[]
+            stalling = []
+            chunkSkip = []
+            latency = []
+
+            for cs in css:
+                GMSD.extend(cs.GMSD)
+                bitrate.extend(cs.bitrate)
+                bitrateSwitch.extend(cs.bitrateSwitch)
+                stalling.extend(cs.stalling)
+                chunkSkip.extend(cs.chunkSkip)
+                latency.extend(cs.latency)
+
+            ciList[key]['bitrate'] = self.get_Confidence_Interval(bitrate) # mean, ci_min, ci_max
+            ciList[key]['bitrateSwitch'] = self.get_Confidence_Interval(bitrateSwitch)
+            ciList[key]['stalling'] = self.get_Confidence_Interval(stalling)
+            ciList[key]['chunkSkip'] = self.get_Confidence_Interval(chunkSkip)
+            ciList[key]['latency'] = self.get_Confidence_Interval(latency)
+            ciList[key]['GMSD'] = self.get_Confidence_Interval(GMSD)
+
+        for key in cluster.keys():
+            css = cluster[key]
+
+            for cs in css:
+                if self.checkDatainCI(cs.bitrate, ciList[key]['bitrate'][0], ciList[key]['bitrate'][1], ciList[key]['bitrate'][2]) and\
+                    self.checkDatainCI(cs.bitrateSwitch, ciList[key]['bitrateSwitch'][0], ciList[key]['bitrateSwitch'][1], ciList[key]['bitrateSwitch'][2]) and\
+                    self.checkDatainCI(cs.stalling, ciList[key]['stalling'][0], ciList[key]['stalling'][1], ciList[key]['stalling'][2]) and\
+                    self.checkDatainCI(cs.chunkSkip, ciList[key]['chunkSkip'][0], ciList[key]['chunkSkip'][1], ciList[key]['chunkSkip'][2]) and\
+                    self.checkDatainCI(cs.latency, ciList[key]['latency'][0], ciList[key]['latency'][1], ciList[key]['latency'][2]) and\
+                    self.checkDatainCI(cs.GMSD, ciList[key]['GMSD'][0], ciList[key]['GMSD'][1], ciList[key]['GMSD'][2]):
+                    pass
+                else:
+                    continue
+
+            ipListInCI[key].append(cs.ip)
+
+        return ipListInCI
 
     def checkDatainCI(self, oneline_data, mean, ci_min, ci_max):
         if type(oneline_data) != list:
