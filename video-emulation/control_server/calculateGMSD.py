@@ -17,6 +17,7 @@ BPS_1600 = cserverConfig.BPS_1600
 # vidcap = cv2.VideoCapture()
 cvLocks = {}
 _lockforLock = Lock()
+_LOG = '[calculateGMSD]'
 
 def _getLock(chunkMP4):
     global cvLocks
@@ -97,11 +98,11 @@ def getClientGMSD(client_image_name, frame_number, frame_rate, chunkMP4, current
             i += 1
 
             if i > 5:
-                print(f'frame number: {frame_number}')
-                print(f'frame number: {frame_rate}')
-                print(f'recal_frame_number: {recal_frame_number}')
-                print(f'chunkMP4: {chunkMP4}')
-                print(f'currentQuality: {currentQuality}')
+                # print(f'{_LOG} | frame number: {frame_number}')
+                # print(f'{_LOG} | frame number: {frame_rate}')
+                # print(f'{_LOG} | recal_frame_number: {recal_frame_number}')
+                # print(f'{_LOG} | chunkMP4: {chunkMP4}')
+                # print(f'{_LOG} | currentQuality: {currentQuality}')
                 if chunkVidCp.isOpened():
                     chunkVidCp.release()
                 lock.release()

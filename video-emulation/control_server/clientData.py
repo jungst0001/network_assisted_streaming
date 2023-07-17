@@ -78,13 +78,14 @@ class ClientData:
 		self._plan = None
 		self.mycluster = None
 		self.isMaster = False
-		self.master_gmsd = 0
+		self.master_gmsd = 0.0
 
 		self._qualityIndex = 0
 		self._currentQuality = 0
 		self.requestURLList = []
 		
 		self.initList = []
+		self.init_key = None
 		self.chunk_key = None
 		self.currentInit = None
 		self.chunkList = []
@@ -98,7 +99,7 @@ class ClientData:
 		self.pqList = []
 
 		# check Timer
-		self._interval = 300
+		self._interval = 12 # twice chunk skip occurs (2sec;chunk size * 6sec;chunk skip threshold)
 		self._timer = ClientTimer(self._interval, self._setTimer, self.ip)
 		self._timer.run()
 
@@ -109,9 +110,38 @@ class ClientData:
 		return self._timer
 
 	def _setTimer(self):
-		self._endTime = datetime.now()
-		self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
-		self._isDisconnected = True
+		# self._endTime = datetime.now()
+		# self._endTimeStr = self._endTime.strftime('%y%m%d_%H:%M:%S')
+		# self._isDisconnected = True
+
+		# like no video chunk data in
+		metric = {}
+		metric['time'] = (datetime.now() - serverInitTime).total_seconds()
+		metric['time'] = round(metric['time'], 3)
+		metric['bitrate'] = 0
+		metric['GMSD'] = 0.0
+		metric['throughput'] = 0
+		metric['framerate'] = 0
+		metric['latency'] = 0
+		metric['stalling'] = 1
+		metric['chunk_skip'] = 1
+		metric['master'] = self._getMaster()
+		metric['totalStallingEvent'] = self.metrics[-1]['totalStallingEvent'] + 1
+		metric['totalChunkSkipEvent'] = self.metrics[-1]['totalChunkSkipEvent'] + 1
+		metric['bitrateSwitch'] = 1
+		
+		print(f'{self._log} | {self.ip} does not send monitoring data')
+
+		metric['QoE'] = self.calculateClientQoE(metric)
+
+		self.rtm.metricLock.acquire()
+		try:
+			self.metrics.append(metric)
+		except:
+			print(f'{self._log} the client {self.ip} metric is not saved')
+		finally:
+			self.rtm.metricLock.release()
+			pass
 
 	def setMasterGMSD(self, gmsd):
 		self.master_gmsd = gmsd
@@ -165,28 +195,52 @@ class ClientData:
 				initURL = init['url']
 				break
 
-		# if initURL is None:
-		# 	chunkURL = None
-		# else:
-		# 	chunkURL = initURL.split('2s_init.mp4')[0]
-		# 	chunkURL = f'{chunkURL}{chunkKey}'
-			# print(f'new chunk URL: {chunkURL}')
-
 		chunkURL = None
-		checkOneMoreChunkURL = True
-		while checkOneMoreChunkURL:
-			# print(f'{self._log} chunklist: {self.chunkList}')
-			for chunk in self.chunkList:
-				if chunkKey in chunk['url']:
-					if chunk['quality'] == currentQuality:
-						chunkURL = chunk['url']
-						break
+		tmp = None
+		for chunk in self.chunkList:
+			if chunkKey in chunk['url']:
+				tmp = chunk['url']
 
-			if chunkURL is None:
-				time.sleep(0.5)
-				checkOneMoreChunkURL = False
+				if chunk['quality'] == currentQuality:
+					chunkURL = chunk['url']
+					break
+
+		# print(f'current quality: {currentQuality}')
+
+		if initURL is None and chunkURL is None and tmp is None:
+			print(f'{self._log} | {self.ip} init and chunk url is None')
+
+			return initURL, chunkURL
+		else:
+			if initURL is not None or chunkURL is not None:
+				url = chunkURL if initURL is None else initURL
+
+				size_url = len(url.split('/')[-1])
+				initURL = f'{url[:-size_url]}{self.init_key}'
+				chunkURL = f'{url[:-size_url]}{chunkKey}'
+				# print(f'new chunk URL: {chunkURL}')
 			else:
-				break
+				url = tmp
+
+				size_url = len(url.split('/')[-1])
+				initURL = f'{url[:-size_url]}{self.init_key}'
+				chunkURL = f'{url[:-size_url]}{chunkKey}'
+
+		# chunkURL = None
+		# checkOneMoreChunkURL = True
+		# while checkOneMoreChunkURL:
+		# 	# print(f'{self._log} chunklist: {self.chunkList}')
+		# 	for chunk in self.chunkList:
+		# 		if chunkKey in chunk['url']:
+		# 			if chunk['quality'] == currentQuality:
+		# 				chunkURL = chunk['url']
+		# 				break
+
+		# 	if chunkURL is None:
+		# 		time.sleep(0.5)
+		# 		checkOneMoreChunkURL = False
+		# 	else:
+		# 		break
 
 		return initURL, chunkURL
 
@@ -199,10 +253,19 @@ class ClientData:
 			self.chunkInCache[frameNumber] = (None, initURL, chunkURL)
 			return
 
+		# if initURL is None:
+		# 	# if _DEBUG:
+		# 	print(f'{self._log} {self.ip} init url is None')
+		# 	self.chunkInCache[frameNumber] = (None, initURL, chunkURL)
+		# 	return
+
 		chunkMP4 = self.ch.getChunkMP4(initURL, chunkURL)
 		if chunkMP4 is None:
 			if _DEBUG:
 				print(f'{self._log} {self.ip} chunk mp4 with {initURL}, {chunkURL} is None')
+
+			self.chunkInCache[frameNumber] = (None, initURL, chunkURL)
+			return
 
 		self.chunkInCache[frameNumber] = (chunkMP4, initURL, chunkURL)
 
@@ -224,7 +287,7 @@ class ClientData:
 
 			if image == 0:
 				self.rtm.pqLock.acquire()
-				self.pqList.append((frameNumber, 0))
+				self.pqList.append((frameNumber, 0.0))
 				self.rtm.pqLock.release()
 
 				return
@@ -263,7 +326,7 @@ class ClientData:
 						print(f'{self._log} {self.ip} chunk with frame number {frameNumber} is not cached')
 						# print(f'{self._log} -> initURL {initURL}')
 						# print(f'{self._log} -> chunkURL {chunkURL}')
-						currentGMSD = 0
+						currentGMSD = 0.0
 					else:
 						currentGMSD = getClientGMSD(head_imageInfo[0], head_imageInfo[1], framerate, chunkMP4, self._currentQuality)
 
@@ -274,13 +337,13 @@ class ClientData:
 
 					self.mycluster.setMasterGMSD(currentGMSD)
 				except:
+					self.pqList.append((frameNumber, 0.0))
+
 					print(f'{self._log} {self.ip} chunkMP4 {chunkMP4} has a problem')
-					print(f'{self._log} -> initURL {initURL}')
-					print(f'{self._log} -> chunkURL {chunkURL}')
-					print(f'{self._log} -> with frame number: {frameNumber}')
-					# print(traceback.format_exc())
 					if _DEBUG:
-						print(f'{self._log} the client {self.ip} gmsd is not calculated')
+						print(f'{self._log} -> initURL {initURL}')
+						print(f'{self._log} -> chunkURL {chunkURL}')
+						print(f'{self._log} -> with frame number: {frameNumber}')
 					pass
 				finally:
 					self.rtm.pqLock.release()
@@ -397,39 +460,65 @@ class ClientData:
 		# 	print(f'{self._log} request over')
 
 	def calculateClientQoE(self, metric):
-		scaled_bitrate = metric['bitrate'] / cserverConfig.max_video_bitrate
+		scaled_bitrate = float(metric['bitrate']) / cserverConfig.max_video_bitrate
 
-		sclaed_latency = metric['latency'] / cserverConfig.video_chunk_size
-		if metric['latency'] > 2:
+		sclaed_latency = float(metric['latency']) / cserverConfig.video_chunk_size
+		if float(metric['latency']) > 2:
 			sclaed_latency = 1
 
-		gmsd = metric['GMSD']
-		if gmsd == 0:
-			gmsd = self.master_gmsd
-
-		rebuffering = metric['stalling']
-		bitrate_switch = metric['bitrateSwitch']
-		chunk_skip = metric['chunk_skip']
+		rebuffering = float(metric['stalling'])
+		bitrate_switch = float(metric['bitrateSwitch'])
+		chunk_skip = float(metric['chunk_skip'])
 		
-		w1 = mycluster.cluster_parameter
-		w2 = WeightedParameter.w2.value
-		w3 = WeightedParameter.w3.value
-		w4 = WeightedParameter.w4.value
-		w5 = WeightedParameter.w5.value
-		w6 = WeightedParameter.w6.value
+		# locking when mycluster is comming
+		while True:
+			if self.mycluster is None:
+				time.sleep(0.2)
+			else:
+				break
+
+		gmsd = float(metric['GMSD'])
+		if gmsd == 0:
+			while True:
+				if self.mycluster.isMaster:
+					gmsd = float(self.master_gmsd)
+					break
+				else:
+					time.sleep(0.2)
+
+			# if gmsd == 0:
+				# gmsd = .7 # minimal gmsd
+
+		# print(f'rebuffering: {rebuffering}, type: {type(rebuffering)}')
+
+		w1 = float(self.mycluster.cluster_parameter)
+		w2 = float(WeightedParameter.w2.value)
+		w3 = float(WeightedParameter.w3.value)
+		w4 = float(WeightedParameter.w4.value)
+		w5 = float(WeightedParameter.w5.value)
+		w6 = float(WeightedParameter.w6.value)
+
+		w1q = (w1*scaled_bitrate)
+		try:
+			w2q = (w2*gmsd)
+		except:
+			print(f'Exception: TypeError')
+			print(f'w2 {w2}, type: {type(w2)}')
+			print(f'gmsd: {gmsd}. type: {type(gmsd)}')
+			w2q = 0.0
+
+		w3q = (w3*bitrate_switch)
+		w4q = (w4*sclaed_latency)
+		w5q = (w5*rebuffering)
+		w6q = (w6*chunk_skip)
 
 		# all parameter varies in [0, 1]
-		qoe = w1 * scaled_bitrate + \
-			w2 * gmsd -\
-			w3 * bitrate_switch -\
-			w4 * sclaed_latency -\
-			w5 * rebuffering -\
-			w6 * chunk_skip
+		qoe = w1q + w2q - (w3q + w4q + w5q + w6q)
 
-		return qoe
+		return round(qoe, 10)
 
 	def _getPQvalue(self, frameNumber):
-		pqValue = 0
+		pqValue = 0.0
 		if len(self.pqList) != 0:
 			if self.rtm.pqLock.acquire():
 				try:
@@ -536,6 +625,7 @@ class ClientData:
 		if 'mp4' in data['request_url']:
 			pass
 		else:
+			# print(self.chunkList[-1])
 			self._saveImageData(data)
 
 		metric = {}

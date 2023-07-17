@@ -124,13 +124,26 @@ class CacheHandler:
 
 	def getChunkMP4(self, initURL, chunkURL):
 		# chunkNumber = frameNumber / (chunkLengthUnit * frameRate)
-		# print(f'get chunkMP4 in local cache dir:\ninitURL:{initURL}\nchunkURL:{chunkURL}')
+		# print(f'{self._log} | get chunkMP4 in local cache dir:\ninitURL:{initURL}\nchunkURL:{chunkURL}')
 		isInitFile, initCacheName = self._getMP4FileFromCache(initURL)
 		isChunkFile, chunkCacheName = self._getMP4FileFromCache(chunkURL)
 
-		if isInitFile and isChunkFile is False:
-			print(f'{self._log} Not exist init or chunk file| init: {isInitFile}, chunk: {isChunkFile}')
+		if isInitFile is False:
+			# print(f'{self._log} Not exist init or chunk file| init: {isInitFile}, chunk: {isChunkFile}')
 			return None
+		elif isChunkFile is False:
+			for i in range(8):
+				isChunkFile, chunkCacheName = self._getMP4FileFromCache(chunkURL)
+
+				# checking chunk file is still saving 
+				if isChunkFile is False:
+					# print(f'{self._log} | Not exist chunk file| chunk: {chunkURL}')
+					time.sleep(0.5)
+				else:
+					break
+
+			if isChunkFile is False:
+				return None
 
 		chunkMP4 = f'{self.localDir}{chunkCacheName}.mp4'
 

@@ -26,7 +26,7 @@ lte_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
 lte_ADJUST_MAX = 15 * MBITS_TO_KBITS # Kbps
 
 fcc_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
-fcc_ADJUST_MAX = 9 * MBITS_TO_KBITS # Kbps
+fcc_ADJUST_MAX = 7 * MBITS_TO_KBITS # Kbps
 
 class ServerData:
 	def __init__(self, playerHandler=None):
@@ -52,11 +52,13 @@ class ServerData:
 
 		self.bandwidth_all = None
 		self.isRunning = [True]
-		self.granularity = 1
+		self.granularity = 3
 		if cserverConfig.dataset_index == 0:
 			self.bandwidth_all, _ = load_fcc()
 		else:
 			self.bandwidth_all, _ = load_lte()
+
+		self.bandwidth_all = np.repeat(self.bandwidth_all, self.granularity)
 
 		# print(self.bandwidth_all)
 		# self.edge_network_all = np.full((1,400), 100.0 * MBITS_TO_KBITS)[0]

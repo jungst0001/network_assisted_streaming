@@ -57,9 +57,13 @@ chunk_key_list = [
 	'BigBuckBunny_2s{Number}.m4s',
 	'RedBull_2{Number}.m4s',
 	'ElephantsDream_2s{Number}.m4s',
-	'TearsOfSteel_2s_{Number}.m4s',
-	'TheSwissAccount_2s{Number}.m4s',
-	'Valkaama_2{Number}.m4s'
+	'TheSwissAccount_2s{Number}.m4s'
+]
+init_key_list = [
+	'BigBuckBunny_2s_init.mp4',
+	'RedBull_2_init.mp4',
+	'ElephantsDream_2s_init.mp4',
+	'TheSwissAccount_2s_init.mp4'
 ]
 
 max_video_bitrate = 3000.0 #kbps

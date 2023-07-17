@@ -19,7 +19,7 @@ lte_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
 lte_ADJUST_MAX = 15 * MBITS_TO_KBITS # Kbps
 
 fcc_ADJUST_MIN = 0.2 * MBITS_TO_KBITS # Kbps
-fcc_ADJUST_MAX = 9 * MBITS_TO_KBITS # Kbps
+fcc_ADJUST_MAX = 7 * MBITS_TO_KBITS # Kbps
 
 HOST_Scale = 1/1
 password = 'winslab'
@@ -116,7 +116,7 @@ def traffic_shaping(throughpt_all, granularity=1):
 	set_tc(throughpt_all[bandwidth_i])
 	try:
 		while True:
-			time.sleep(granularity) # default: 1sec
+			time.sleep(1) # default: 1sec
 			bandwidth_i += 1
 
 			if throughpt_all[bandwidth_i] == 0:
@@ -158,6 +158,7 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--dataset', dest='dataset', help='select dataset', type=int, default=None)
 	parser.add_argument('-t', '--terminate', dest='terminate', help='stop tc', action="store_true")
 	args = parser.parse_args()
+	granularity = 3
 
 	if args.terminate:
 		stop_tc()
@@ -175,5 +176,9 @@ if __name__ == '__main__':
 	elif args.dataset == 1:
 		throughpt_all, _ = load_lte()
 
+	throughpt_all = np.repeat(throughpt_all, granularity)
+	# print(throughpt_all)
+	# print(len(throughpt_all))
+
 	# throughpt_all = shuffle_throughput(throughpt_all)
-	traffic_shaping(throughpt_all, granularity=1)
+	traffic_shaping(throughpt_all, granularity)

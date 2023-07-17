@@ -5,6 +5,7 @@ import copy
 import traceback
 import numpy as np
 from scipy import stats
+from sklearn.preprocessing import MinMaxScaler
 from ClientStateData import ClientState, ServerState
 import estimateGMSD
 import rlserverConfig
@@ -22,7 +23,7 @@ class VideoState:
         if subDir is not None:
             self._subDir = subDir
         else:
-            self._subDir = 'demo'
+            self._subDir = 'qoeTest'
 
         # self._subDir_buff = ['Bf15', 'Bf30', 'Bf45', 'Bf60']
         self.net_abr_pair = [('FCC', 'Rate'), ('4G', 'Rate'), ('FCC', 'BOLA'), ('4G', 'BOLA')]
@@ -86,6 +87,9 @@ class VideoState:
                     state = (ServerState(), []) # serverState, clientStates(list)
 
                     self._readObservation(state, (net, abr), filename, subDir=self._subDir)
+                    ipCIList = self.chooseSampleClientState(state[1])
+                    print(ipCIList)
+                    state = state + (ipCIList,)
 
                     if len(state[1]) != self.MAX_CLIENT_NUM:
                         # print(f'{self._log} clientnum error, client num: {len(state[1])}')
@@ -211,6 +215,7 @@ class VideoState:
             stalling = []
             chunkSkip = []
             latency = []
+            QoE = []
 
             for cs in css:
                 GMSD.extend(cs.GMSD)
@@ -219,6 +224,12 @@ class VideoState:
                 stalling.extend(cs.stalling)
                 chunkSkip.extend(cs.chunkSkip)
                 latency.extend(cs.latency)
+                QoE.extend(cs.QoE)
+
+            # QoE = np.array(QoE)
+            # scaler = MinMaxScaler()
+            # QoE = scaler.fit_transform(QoE.reshape(-1,1))
+            # QoE = QoE.flatten()
 
             ciList[key]['bitrate'] = self.get_Confidence_Interval(bitrate) # mean, ci_min, ci_max
             ciList[key]['bitrateSwitch'] = self.get_Confidence_Interval(bitrateSwitch)
@@ -226,48 +237,78 @@ class VideoState:
             ciList[key]['chunkSkip'] = self.get_Confidence_Interval(chunkSkip)
             ciList[key]['latency'] = self.get_Confidence_Interval(latency)
             ciList[key]['GMSD'] = self.get_Confidence_Interval(GMSD)
+            ciList[key]['QoE'] = self.get_Confidence_Interval(QoE)
 
         for key in cluster.keys():
             css = cluster[key]
 
-            for cs in css:
-                if self.checkDatainCI(cs.bitrate, ciList[key]['bitrate'][0], ciList[key]['bitrate'][1], ciList[key]['bitrate'][2]) and\
-                    self.checkDatainCI(cs.bitrateSwitch, ciList[key]['bitrateSwitch'][0], ciList[key]['bitrateSwitch'][1], ciList[key]['bitrateSwitch'][2]) and\
-                    self.checkDatainCI(cs.stalling, ciList[key]['stalling'][0], ciList[key]['stalling'][1], ciList[key]['stalling'][2]) and\
-                    self.checkDatainCI(cs.chunkSkip, ciList[key]['chunkSkip'][0], ciList[key]['chunkSkip'][1], ciList[key]['chunkSkip'][2]) and\
-                    self.checkDatainCI(cs.latency, ciList[key]['latency'][0], ciList[key]['latency'][1], ciList[key]['latency'][2]) and\
-                    self.checkDatainCI(cs.GMSD, ciList[key]['GMSD'][0], ciList[key]['GMSD'][1], ciList[key]['GMSD'][2]):
-                    pass
-                else:
-                    continue
+            print(f'{key}: {len(css)}')
 
-            ipListInCI[key].append(cs.ip)
+            for cs in css:
+                # if self.checkDatainCI(np.array(cs.bitrate), ciList[key]['bitrate'][0], ciList[key]['bitrate'][1], ciList[key]['bitrate'][2]):
+                #     pass
+                # else:
+                #     print(f'bitrate is not in CI, mean: {np.mean(np.array(cs.bitrate))} CI: {ciList[key]["bitrate"]}')
+                #     continue
+                # if self.checkDatainCI(cs.bitrateSwitch, ciList[key]['bitrateSwitch'][0], ciList[key]['bitrateSwitch'][1], ciList[key]['bitrateSwitch'][2]) and\
+                #     self.checkDatainCI(cs.stalling, ciList[key]['stalling'][0], ciList[key]['stalling'][1], ciList[key]['stalling'][2]) and\
+                #     self.checkDatainCI(cs.chunkSkip, ciList[key]['chunkSkip'][0], ciList[key]['chunkSkip'][1], ciList[key]['chunkSkip'][2]) and\
+                #     self.checkDatainCI(cs.latency, ciList[key]['latency'][0], ciList[key]['latency'][1], ciList[key]['latency'][2]) and\
+                #     self.checkDatainCI(cs.GMSD, ciList[key]['GMSD'][0], ciList[key]['GMSD'][1], ciList[key]['GMSD'][2]) and\
+                #     self.checkDatainCI(cs.QoE, ciList[key]['QoE'][0], ciList[key]['QoE'][1], ciList[key]['QoE'][2]):
+                #     pass
+                if self.checkDatainCI(np.array(cs.QoE), ciList[key]['QoE'][0], ciList[key]['QoE'][1], ciList[key]['QoE'][2]):
+                    ipListInCI[key].append(cs.getIP())
+                else:
+                    # print(f'QoE is not in CI, mean: {np.mean(np.array(cs.QoE))} CI: {ciList[key]["QoE"]}')
+                    continue
 
         return ipListInCI
 
     def checkDatainCI(self, oneline_data, mean, ci_min, ci_max):
-        if type(oneline_data) != list:
-            if oneline_data > ci_min and oneline_data < ci_max:
-                return True
-            else:
-                return False
-        elif:
-            for a_data in oneline_data:
-                if oneline_data > ci_min and oneline_data < ci_max:
-                    continue
-                else:
-                    return False
+        # oneline_data = oneline_data.flatten()
+        # # print(oneline_data)
+        # # print(ci_min)
+        # # print(ci_max)
 
-    def get_Confidence_Interval(data, confidence = 0.95):
+        # comp_min = oneline_data > ci_min
+        # comp_max = oneline_data < ci_max
+
+        # print(np.logical_and(comp_max, comp_min))
+
+        # if type(oneline_data) != list:
+        #     if oneline_data > ci_min and oneline_data < ci_max:
+        #         return True
+        #     else:
+        #         return False
+        # else:
+        #     for a_data in oneline_data:
+        #         if a_data > ci_min and a_data < ci_max:
+        #             continue
+        #         else:
+        #             return False
+
+        #     return True
+
+        if np.mean(oneline_data) > ci_min and np.mean(oneline_data) < ci_max:
+            return True
+        else:
+            return False
+
+
+    def get_Confidence_Interval(self, data, confidence=0.95):
         data = np.array(data)
-        mean = np.mean(data)
-        n = len(data)
+        # mean = np.mean(data)
+        # n = len(data)
 
-        stderr = stats.sem(data)
+        # stderr = stats.sem(data)
+        # print(stderr)
 
-        interval = stderr - stats.t.ppf( (1 + confidence) / 2, n-1)
+        # interval = stderr - stats.t.ppf( (1 + confidence) / 2, n-1)
 
-        return mean, mean-interval, mean+interval
+        lower, upper = stats.t.interval(alpha=confidence, df=len(data)-1, loc=np.mean(data), scale=stats.sem(data))
+
+        return np.mean(data), lower, upper
 
     def printClientStatistic(self, clientStatistic):
         for net, abr in self.net_abr_pair:

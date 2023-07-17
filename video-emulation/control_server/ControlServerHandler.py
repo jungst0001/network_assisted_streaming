@@ -27,6 +27,7 @@ class ControlServerHandler:
 		self._live_streaming_server = cserverConfig.video_proxy_server
 		self._live_streaming_video_name = cserverConfig.video_list[self._video_index]
 		self._live_streaming_chunk_key = cserverConfig.chunk_key_list[self._video_index]
+		self._live_streaming_init_key = cserverConfig.init_key_list[self._video_index]
 
 		# cluster management section
 		self._clusters = {}
@@ -37,7 +38,7 @@ class ControlServerHandler:
 					continue
 				elif ca.name == 'SD' and (plan.name == 'Premium' or plan.name == 'Standard'):
 					continue
-				cluster = Cluster(ca.name, plan.name)
+				cluster = Cluster(ca, plan)
 				self._clusters[ca.name][plan.name] = cluster
 
 		# file name
@@ -134,6 +135,7 @@ class ControlServerHandler:
 
 		if result is False:
 			player = ClientData(ip, port)
+			player.init_key = self._live_streaming_init_key
 			player.chunk_key = self._live_streaming_chunk_key
 			self._currPlayers.append(player)
 			# self._clusters[player.getAttribute()].getClusterPlayers().append(player)

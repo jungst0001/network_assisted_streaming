@@ -34,7 +34,7 @@ class AutoDataGeneratorOptions:
 		self.REMOTE_NUM_OF_PLAYER = 25
 		self.NUM_OF_TOTAL_PLAYER = self.NUM_Of_PLAYER + self.REMOTE_NUM_OF_PLAYER
 
-		self.VIDEO_RUNNING_TIME = 100 # unit is second
+		self.VIDEO_RUNNING_TIME = 200 # unit is second
 		self.PLAYER_CATEGORY = "firefox" # or "firefox" "google-chrome-stable"
 
 		self.MSERVER_URL = "http://143.248.57.162" # static URL
@@ -53,8 +53,8 @@ class AutoDataGeneratorOptions:
 		self.REMOTE_MAX_PLAYER_PER_CLIENT = 1
 		###############################################
 				# Auto OPTION #
-		self.INCOMMING_TIME = 30
-		self.OUTCOMMING_TIME = 30
+		self.INCOMMING_TIME = 50
+		self.OUTCOMMING_TIME = 50
 
 def log_string(str):
 	log = '\033[95m' + str + '\033[0m'

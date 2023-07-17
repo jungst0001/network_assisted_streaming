@@ -11,14 +11,14 @@ class ClusterAttribute(Enum):
 	SD = 480
 
 class WeightedParameter(Enum):
-	w1 = 1 # bitrate
-	w2 = 1 # gmsd
-	w3 = 1 # bitrate switch
-	w4 = 1 # latency
+	w1 = 1.0 # bitrate
+	w2 = 1.0 # gmsd
+	w3 = 1.0 # bitrate switch
+	w4 = 1.0 # latency
 	w5 = 1.2 # rebuffering
 	w6 = 1.4 # chunk skip
 
-	cluster_FHD = 1
+	cluster_FHD = 1.0
 	cluster_HD = 1.2
 	cluster_SD = 1.5
 
@@ -29,6 +29,7 @@ class Cluster:
 		self.plan = plan
 		self.attribute = attribute
 		self.cluster_parameter = 0
+		self.isMaster = False
 
 		if attribute.name == 'FHD':
 			self.cluster_parameter = WeightedParameter.cluster_FHD.value
@@ -69,11 +70,13 @@ class Cluster:
 
 		if client.isMaster == True:
 			client.isMaster = False
+			self.isMaster = False
 			self.setMaster()
 
 	def setMaster(self):
 		if len(self._currClients) >= 1:
 			self._currClients[0].isMaster = True
+			self.isMaster = True
 			print(f'{self._log} | [INFO] {self._currClients[0].ip} is master')
 
 if __name__ == "__main__":
